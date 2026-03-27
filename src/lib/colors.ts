@@ -1,0 +1,18 @@
+export const COLORS = {
+  primary: "#22c55e",
+  primaryHover: "#16a34a",
+  primarySoft: "rgba(34,197,94,0.4)",
+  primarySoft08: "rgba(34,197,94,0.08)",
+  primarySoft15: "rgba(34,197,94,0.15)",
+  primaryGlow: "rgba(34,197,94,0.3)",
+  primaryGradientStart: "#16a34a",
+  primaryGradientEnd: "#22c55e",
+  backgroundStart: "#1e1e22",
+  backgroundEnd: "#1a1a1e",
+  border: "rgba(255,255,255,0.06)",
+  shadow: "rgba(0,0,0,0.6)",
+  shadowInset: "rgba(255,255,255,0.03)",
+  text: "#f1f1f3",
+  textMuted: "#c4c4cc",
+  textSecondary: "#6b6b78",
+};
