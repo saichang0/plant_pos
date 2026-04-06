@@ -4,6 +4,7 @@ import { AsyncIcon, CheckIcon, CloseIcon, DotThreeIcon, ListIcon } from '@/src/c
 import OrderDetailsPanel from '@/src/components/OrderDetailsPanel';
 import React from 'react';
 import { MdExpandMore } from 'react-icons/md';
+import { COLORS } from '@/src/lib/colors';
 
 const OrderDashboard = () => {
   const [menuOrderId, setMenuOrderId] = React.useState<string | null>(null);
@@ -80,7 +81,7 @@ const OrderDashboard = () => {
           {summary.map((card) => (
             <article
               key={card.key}
-              className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex justify-between items-start"
+              className="relative group bg-white border border-gray-100 rounded-3xl p-2 flex flex-col items-center text-center hover:shadow-2xl shadow-sm transition-all duration-200 cursor-pointer"
             >
               <div>
                 <p className="text-sm font-medium text-gray-500">{card.title}</p>

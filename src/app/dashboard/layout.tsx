@@ -1,6 +1,7 @@
 "use client";
 
 import Sidebar from '@/src/components/sidebar';
+import { ToastProvider } from '@/src/components/toast';
 import React, { useState } from 'react';
 import { FaBars } from "react-icons/fa";
 import { IoIosSearch } from 'react-icons/io';
@@ -8,6 +9,9 @@ import { NotiIcon } from '@/src/components/icons/page';
 import { GoPlus } from 'react-icons/go';
 import { IoPersonCircleSharp } from 'react-icons/io5';
 import { MdOutlinePersonalInjury } from 'react-icons/md';
+import { useRouter } from 'next/navigation';
+import { GRADIENTS } from '@/src/lib/colors';
+
 
 export default function DashboardLayout({
   children,
@@ -16,8 +20,10 @@ export default function DashboardLayout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const router = useRouter();
 
   return (
+    <ToastProvider>
     <div className="min-h-screen bg-slate-100">
       <Sidebar
         isOpen={sidebarOpen}
@@ -27,10 +33,10 @@ export default function DashboardLayout({
       />
 
       {/* Main content */}
-      <div className={`ml-0 min-h-screen overflow-y-auto transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'
+      <div className={`ml-0 min-h-screen overflow-x-hidden transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'
         }`}>
         {/* Top header */}
-        <header className="sticky top-0 z-40 bg-white border-b border-slate-700/50">
+        <header className={`fixed top-0 right-0 z-40 bg-white border-b border-slate-700/50 transition-all duration-300 ${isSidebarCollapsed ? 'lg:left-20' : 'lg:left-72'} left-0`}>
           <div className="flex items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
             <button
               type="button"
@@ -55,7 +61,9 @@ export default function DashboardLayout({
 
               {/* Notifications */}
               <div className="flex items-center space-x-4 w-50% justify-around">
-                <button className="flex items-center justify-center bg-gradient-to-b from-[#06221A] via-[#041a14] to-[#06221A] space-x-2 text-slate-100 transition-colors px-3 py-2 rounded-[50px]">
+                <button
+                onClick={() => router.push('/dashboard/addPlant')}
+                 className={`flex items-center justify-center ${GRADIENTS.sidebarBg} space-x-2 text-slate-100 transition-colors px-3 py-2 rounded-[50px]`}>
                   <GoPlus className='font-bold w-5 h-5' />
                   <span>Add new plant</span>
                 </button>
@@ -74,10 +82,11 @@ export default function DashboardLayout({
         </header>
 
         {/* Page content */}
-        <main className="p-4 sm:p-6 lg:p-8">
+        <main className="px-4 pb-4 pt-[88px] sm:px-6 sm:pb-6 lg:px-8 lg:pb-8">
           {children}
         </main>
       </div>
     </div>
+    </ToastProvider>
   );
 }

@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { GRADIENTS } from '@/src/lib/colors';
 import {
   FaHome,
   FaShoppingCart,
@@ -15,7 +16,9 @@ import {
   FaSignOutAlt,
   FaBars,
   FaTimes,
-  FaChevronRight
+  FaChevronRight,
+  FaTruckLoading,
+  FaWarehouse,
 } from "react-icons/fa";
 
 interface SidebarItem {
@@ -43,15 +46,10 @@ const sidebarItems: SidebarItem[] = [
     href: '/dashboard/reports',
     icon: FaChartBar,
   },
-  // {
-  //   name: 'ລາຍການສັ່ງຊື້',
-  //   href: '/dashboard/manage-data',
-  //   icon: FaUsers,
-  // },
   {
     name: 'ລາຍການສັ່ງຊື້',
     href: '/dashboard/import',
-    icon: FaBox,
+    icon: FaTruckLoading,
   },
   // {
   //   name: 'ຂາຍ',
@@ -61,7 +59,7 @@ const sidebarItems: SidebarItem[] = [
   {
     name: 'ຈັດການສະຕ໋ອກ',
     href: '/dashboard/stock',
-    icon: FaBox,
+    icon: FaWarehouse,
   },
   {
     name: 'ສີນຄ້າຄົງຄັງ',
@@ -124,7 +122,7 @@ export default function Sidebar({ isOpen, setIsOpen, isCollapsed: propCollapsed,
       {/* Sidebar */}
       <div className={`
         fixed top-0 left-0 h-screen z-50 
-        bg-gradient-to-b from-[#06221A] via-[#041a14] to-[#06221A]
+        ${GRADIENTS.sidebarBg}
         border-r border-emerald-900/30 transform transition-all duration-300 ease-in-out
         lg:translate-x-0
         ${isCollapsed ? 'w-20' : 'w-72'}

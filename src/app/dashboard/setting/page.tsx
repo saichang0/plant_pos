@@ -1,18 +1,17 @@
+"use client";
+
 import { AboutIcon, AwardIcon, BankIcon, CircleUser, DollarIcon, GridIcon, HomeIcon, LanguageIcon, ListIcon, PrintIcon, ProtectIcon, UserPlusIcon } from '@/src/components/icons/page';
+import { useRouter } from 'next/navigation';
 import React from 'react';
 
 const SettingsPage = () => {
+  const router = useRouter();
   const settingsItems = [
-    { title: "ໂປຣຟາຍ", desc: "ຂໍ້ມູນໂປຣຟາຍຂອງຜູ້ເຂົ້າໃຊ້ລະບົບ", icon: <CircleUser size={32} /> },
+    { title: "ໂປຣຟາຍ", desc: "ຂໍ້ມູນໂປຣຟາຍຂອງຜູ້ເຂົ້າໃຊ້ລະບົບ", icon: <CircleUser size={32} />, link: "/dashboard/setting/user" },
     { title: "ປະເພດສິນຄ້າ", desc: "ເພີ່ມຕັ້ງຄ່າປະເພດ ສິນຄ້າ ໃນຮ້ານຂອງທ່ານ", icon: <GridIcon size={32} /> },
     { title: "ແບຣນ", desc: "ຈັດການ ຕັ້ງຄ່າແບຣນ", icon: <AboutIcon size={32} /> },
     { title: "ເລດເງິນ", desc: "ກຳນົດເລດເງິນໃນການຂາຍສິນຄ້າ", icon: <DollarIcon size={32} /> },
-    { title: "ປິນເຕີ", desc: "ການຕັ້ງຄ່າກ່ຽວກັບປິນເຕີ ໃນລະບົບ", icon: <PrintIcon size={32} /> },
-    { title: "ສ້າງບາໂຄດ", desc: "ຕັ້ງຄ່າ ສຳລັບບາໂຄດ ສິນຄ້າ", icon: <ListIcon size={32} /> },
-    { title: "ບັນຊີ", desc: "ຕັ້ງຄ່າບັນຊີ ທະນາຄານ", icon: <BankIcon size={32} /> },
-    { title: "ຈັດການພະນັກງານ", desc: "ການຕັ້ງຄ່າ ສຳລັບພະນັກງານນຳໃຊ້ລະບົບ", icon: <UserPlusIcon size={32} /> },
-    { title: "ຈັດການຂອງລາງວັນ", desc: "ການຕັ້ງຄ່າ ການຄຳນວນຄະແນນ & ຂອງລາງວັນ", icon: <AwardIcon size={32} /> },
-    { title: "ສິດນຳໃຊ້ລະບົບ", desc: "ກຳນົດສິດນຳໃຊ້ລະບົບ", icon: <ProtectIcon size={32} /> },
+    { title: "ຜູ້ສະໜອງ", desc: "ກຳນົດຂໍ້ມູນຜູ້ສະໜອງ", icon: <UserPlusIcon size={32} />, link: "/dashboard/setting/supplier" },
     { title: "ພາສາ", desc: "ກຳນົດພາສາໃນລະບົບ", icon: <LanguageIcon size={32} /> },
     { title: "ຕັ້ງຄ່າຮ້ານ", desc: "ຂໍ້ມູນກ່ຽວກັບການຂາຍ", icon: <HomeIcon size={32} />, isNew: true },
   ];
@@ -27,11 +26,12 @@ const SettingsPage = () => {
         </header>
 
         {/* Grid Container */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {settingsItems.map((item, index) => (
             <div
               key={index}
-              className="relative group bg-white border border-gray-200 rounded-lg p-8 flex flex-col items-center text-center transition-all duration-200 hover:shadow-md hover:border-blue-400 cursor-pointer"
+              onClick={() => item.link && router.push(item.link)}
+              className="relative group bg-white border border-gray-100 rounded-3xl p-4 flex flex-col items-center text-center hover:shadow-2xl shadow-sm transition-all duration-200 cursor-pointer"
             >
               {/* "New" Badge */}
               {item.isNew && (
@@ -41,7 +41,7 @@ const SettingsPage = () => {
               )}
 
               {/* Icon Container */}
-              <div className="mb-4 text-gray-700 group-hover:text-blue-600 transition-colors">
+              <div className="mb-4 text-gray-700 group-hover:text-emerald-900 transition-colors">
                 {item.icon}
               </div>
 

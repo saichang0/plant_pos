@@ -4,23 +4,45 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CloseEyeIcon, OpenEyeIcon } from '@/src/components/icons/page';
+import { LoginUserInput } from '@/src/types/auth';
+import { loginUser } from '@/src/services/auth';
 
 export default function LoginPage () {
   const router = useRouter();
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState(''); // Changed from email to identifier
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Handle login logic here
-    console.log('Login:', { email, password, rememberMe });
-    
-    // For demo purposes, redirect to dashboard after successful login
-    // In a real app, you would validate credentials with your backend
-    router.push('/dashboard');
+    setIsLoading(true);
+    setError('');
+
+    const input: LoginUserInput = { identifier, password }; // Updated to use identifier
+
+    try {
+      const response = await loginUser(input);
+      if (response.status === true) { // Changed from 'true' (string) to true (boolean)
+        // Store tokens in localStorage
+        localStorage.setItem('accessToken', response.accessToken);
+        localStorage.setItem('refreshToken', response.refreshToken);
+        // Optionally store user data
+        localStorage.setItem('user', JSON.stringify(response.user));
+
+        // Redirect to dashboard
+        router.push('/dashboard');
+      } else {
+        setError(response.message || 'Login failed');
+      }
+    } catch (err) {
+      setError('An error occurred during login. Please try again.');
+      console.error('Login error:', err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -48,14 +70,20 @@ export default function LoginPage () {
 
           {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="text-red-400 text-sm text-center bg-red-900/20 p-2 rounded-lg">
+                {error}
+              </div>
+            )}
             {/* Email Input */}
             <div>
               <input
-                type="email"
-                placeholder="ອີເມວ"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                type="text" // Changed from email to text for identifier
+                placeholder="ອີເມວ ຫຼື ເບີໂທ"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 className="w-full px-4 py-3 bg-transparent bg-back/30 border border-green-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all"
+                required
               />
             </div>
 
@@ -67,6 +95,7 @@ export default function LoginPage () {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full px-4 py-3 pr-12 bg-transparent border border-green-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 transition-all"
+                required
               />
               <button
                 type="button"
@@ -97,9 +126,10 @@ export default function LoginPage () {
             {/* Sign In Button */}
             <button
               type="submit"
-              className="w-full bg-white text-black font-semibold py-3 rounded-xl hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98]"
+              disabled={isLoading}
+              className="w-full bg-white text-black font-semibold py-3 rounded-xl hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              ເຂົ້າສູ່ລະບົບ
+              {isLoading ? 'ກຳລັງເຂົ້າສູ່ລະບົບ...' : 'ເຂົ້າສູ່ລະບົບ'}
             </button>
           </form>
         </div>
