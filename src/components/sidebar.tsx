@@ -20,6 +20,8 @@ import {
   FaTruckLoading,
   FaWarehouse,
 } from "react-icons/fa";
+import { MdLocalPrintshop } from 'react-icons/md';
+import { TrendUpIcon } from './icons/page';
 
 interface SidebarItem {
   name: string;
@@ -37,6 +39,11 @@ const sidebarItems: SidebarItem[] = [
     activeIcon: FaHome,
   },
   {
+    name: 'ຂາຍ',
+    href: '/dashboard/sales',
+    icon: TrendUpIcon,
+  },
+  {
     name: 'ຈັດການອໍເດີ',
     href: '/dashboard/order',
     icon: FaShoppingCart,
@@ -51,11 +58,6 @@ const sidebarItems: SidebarItem[] = [
     href: '/dashboard/import',
     icon: FaTruckLoading,
   },
-  // {
-  //   name: 'ຂາຍ',
-  //   href: '/dashboard/sales',
-  //   icon: FaCreditCard,
-  // },
   {
     name: 'ຈັດການສະຕ໋ອກ',
     href: '/dashboard/stock',

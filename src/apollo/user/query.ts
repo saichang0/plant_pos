@@ -13,6 +13,7 @@ query GetUser($id: ID!) {
       email
       profileImageUrl
       shopName
+      bankAccountImageUrl
       role
       status
       createdAt

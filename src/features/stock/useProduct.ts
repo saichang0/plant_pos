@@ -2,22 +2,30 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { BACKEND_URLS } from "@/src/lib/config";
-import { CREATE_PRODUCT_MUTATION } from "@/src/apollo/product/mutation";
-import { GET_PRODUCTS_QUERY } from "@/src/apollo/product/query";
+import { gqlFetch } from "@/src/lib/gqlFetch";
+import { CREATE_PRODUCT_MUTATION, UPDATE_PRODUCT_MUTATION, DELETE_PRODUCT_MUTATION } from "@/src/apollo/product/mutation";
+import { GET_PRODUCTS_QUERY, GET_PRODUCT_QUERY } from "@/src/apollo/product/query";
 import { GET_CATEGORIES_QUERY } from "@/src/apollo/category/query";
 import { Category } from "@/src/types/auth";
 
 export interface Product {
   id: string;
   categoryId: string;
+  category: { id: string; name: string } | null;
   name: string;
   imageUrl: string | null;
   description: string;
   size: string;
   ageMonths: number;
+  unit: { id: string; name: string; weightInGrams: number | null } | null;
+  weightPerUnit: number | null;
   stockQuantity: number;
+  stockWeight: number;
   costPrice: number;
   salePrice: number;
+  pricePerHalfBag: number | null;
+  pricePer12Kg: number | null;
+  pricePerKg: number | null;
   isPopular: boolean;
   isSpecialOffer: boolean;
   discount: number;
@@ -35,10 +43,15 @@ export interface ProductFormData {
   imageUrl: string;
   description: string;
   size: string;
+  unit: string;
+  weightPerUnit: number;
   ageMonths: number;
   stockQuantity: number;
   costPrice: number;
   salePrice: number;
+  pricePerHalfBag: number;
+  pricePer12Kg: number;
+  pricePerKg: number;
   discount: number;
   isSpecialOffer: boolean;
   isActive: boolean;
@@ -53,10 +66,15 @@ const initialFormData: ProductFormData = {
   imageUrl: "",
   description: "",
   size: "",
+  unit: "",
+  weightPerUnit: 0,
   ageMonths: 0,
   stockQuantity: 0,
   costPrice: 0,
   salePrice: 0,
+  pricePerHalfBag: 0,
+  pricePer12Kg: 0,
+  pricePerKg: 0,
   discount: 0,
   isSpecialOffer: false,
   isActive: true,
@@ -64,12 +82,6 @@ const initialFormData: ProductFormData = {
   isPopular: false,
   imageFile: null,
 };
-
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 async function uploadImage(file: File): Promise<string> {
   const formData = new FormData();
@@ -114,26 +126,14 @@ export function useProducts() {
       setError(null);
 
       try {
-        const response = await fetch(BACKEND_URLS.local, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...getAuthHeaders(),
-          },
-          body: JSON.stringify({
-            query: GET_PRODUCTS_QUERY,
-            variables: {
+        const result = await gqlFetch(GET_PRODUCTS_QUERY, {
               keyword: options?.keyword || undefined,
               paginate: {
                 page: options?.page || 1,
-                limit: options?.limit || 50,
+                limit: options?.limit || 100,
               },
               filter: options?.filter || undefined,
-            },
-          }),
-        });
-
-        const result = await response.json();
+            });
 
         if (result.errors) {
           setError(result.errors[0].message);
@@ -176,16 +176,7 @@ export function useCategories() {
       setError(null);
 
       try {
-        const response = await fetch(BACKEND_URLS.local, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...getAuthHeaders(),
-          },
-          body: JSON.stringify({ query: GET_CATEGORIES_QUERY }),
-        });
-
-        const data = await response.json();
+        const data = await gqlFetch(GET_CATEGORIES_QUERY);
 
         if (data.errors) {
           setError(data.errors[0].message);
@@ -237,28 +228,22 @@ export function useCreateProduct() {
         imageUrl,
         description: formData.description,
         size: formData.size,
+        unitId: formData.unit || undefined,
+        weightPerUnit: (Number(formData.weightPerUnit) || 0) * 1000 || undefined,
         ageMonths: Number(formData.ageMonths) || 0,
         stockQuantity: Number(formData.stockQuantity) || 0,
+        stockWeight: (Number(formData.weightPerUnit) || 0) * 1000 * (Number(formData.stockQuantity) || 0),
         costPrice: Number(formData.costPrice) || 0,
         salePrice: Number(formData.salePrice) || 0,
+        pricePerHalfBag: Number(formData.pricePerHalfBag) || undefined,
+        pricePer12Kg: Number(formData.pricePer12Kg) || undefined,
+        pricePerKg: Number(formData.pricePerKg) || undefined,
         discount: Number(formData.discount) || 0,
         isSpecialOffer: formData.isSpecialOffer,
         isActive: formData.isActive,
       };
 
-      const response = await fetch(BACKEND_URLS.local, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify({
-          query: CREATE_PRODUCT_MUTATION,
-          variables: { input: productInput },
-        }),
-      });
-
-      const result = await response.json();
+      const result = await gqlFetch(CREATE_PRODUCT_MUTATION, { input: productInput });
 
       if (result.errors) {
         return { success: false, message: result.errors[0].message };
@@ -285,4 +270,106 @@ export function useCreateProduct() {
   };
 
   return { formData, setFormData, submitting, createProduct, resetForm };
+}
+
+// Hook for fetching a single product by ID
+export function useProduct(id: string | null) {
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchProduct = useCallback(async () => {
+    if (!id) return;
+    setLoading(true);
+    setError(null);
+
+    try {
+      const result = await gqlFetch(GET_PRODUCT_QUERY, { where: { id } });
+
+      if (result.errors) {
+        setError(result.errors[0].message);
+        return;
+      }
+
+      const data = result.data?.product;
+      if (data?.status) {
+        setProduct(data.data || null);
+      } else {
+        setError(data?.message || "Failed to fetch product");
+      }
+    } catch {
+      setError("Failed to fetch product");
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    fetchProduct();
+  }, [fetchProduct]);
+
+  return { product, loading, error, refetch: fetchProduct };
+}
+
+// Hook for updating a product
+export function useUpdateProduct() {
+  const [submitting, setSubmitting] = useState(false);
+
+  const updateProduct = async (
+    id: string,
+    input: Record<string, unknown>
+  ): Promise<{ success: boolean; message: string }> => {
+    setSubmitting(true);
+
+    try {
+      const result = await gqlFetch(UPDATE_PRODUCT_MUTATION, { id, input });
+
+      if (result.errors) {
+        return { success: false, message: result.errors[0].message };
+      }
+
+      const data = result.data?.updateProduct;
+      if (data?.status) {
+        return { success: true, message: data.message || "Updated!" };
+      }
+      return { success: false, message: data?.message || "Failed" };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return { submitting, updateProduct };
+}
+
+// Hook for deleting a product
+export function useDeleteProduct() {
+  const [submitting, setSubmitting] = useState(false);
+
+  const deleteProduct = async (
+    id: string
+  ): Promise<{ success: boolean; message: string }> => {
+    setSubmitting(true);
+
+    try {
+      const result = await gqlFetch(DELETE_PRODUCT_MUTATION, { id });
+
+      if (result.errors) {
+        return { success: false, message: result.errors[0].message };
+      }
+
+      const data = result.data?.deleteProduct;
+      if (data?.status) {
+        return { success: true, message: data.message || "Deleted!" };
+      }
+      return { success: false, message: data?.message || "Failed" };
+    } catch {
+      return { success: false, message: "Something went wrong" };
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return { submitting, deleteProduct };
 }

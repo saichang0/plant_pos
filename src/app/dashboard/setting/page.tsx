@@ -8,12 +8,12 @@ const SettingsPage = () => {
   const router = useRouter();
   const settingsItems = [
     { title: "ໂປຣຟາຍ", desc: "ຂໍ້ມູນໂປຣຟາຍຂອງຜູ້ເຂົ້າໃຊ້ລະບົບ", icon: <CircleUser size={32} />, link: "/dashboard/setting/user" },
-    { title: "ປະເພດສິນຄ້າ", desc: "ເພີ່ມຕັ້ງຄ່າປະເພດ ສິນຄ້າ ໃນຮ້ານຂອງທ່ານ", icon: <GridIcon size={32} /> },
-    { title: "ແບຣນ", desc: "ຈັດການ ຕັ້ງຄ່າແບຣນ", icon: <AboutIcon size={32} /> },
-    { title: "ເລດເງິນ", desc: "ກຳນົດເລດເງິນໃນການຂາຍສິນຄ້າ", icon: <DollarIcon size={32} /> },
+    { title: "ປະເພດສິນຄ້າ", desc: "ເພີ່ມຕັ້ງຄ່າປະເພດ ສິນຄ້າ ໃນຮ້ານຂອງທ່ານ", icon: <GridIcon size={32} />, link: "/dashboard/setting/category" },
+    { title: "ຫົວໜ່ວຍ", desc: "ຈັດການ ຕັ້ງຄ່າຫົວໜ່ວຍ", icon: <AboutIcon size={32} />, link: "/dashboard/setting/unit" },
+    { title: "ເລດເງິນ", desc: "ກຳນົດເລດເງິນໃນການຂາຍສິນຄ້າ", icon: <DollarIcon size={32} />, link: "/dashboard/setting/rate" },
     { title: "ຜູ້ສະໜອງ", desc: "ກຳນົດຂໍ້ມູນຜູ້ສະໜອງ", icon: <UserPlusIcon size={32} />, link: "/dashboard/setting/supplier" },
-    { title: "ພາສາ", desc: "ກຳນົດພາສາໃນລະບົບ", icon: <LanguageIcon size={32} /> },
-    { title: "ຕັ້ງຄ່າຮ້ານ", desc: "ຂໍ້ມູນກ່ຽວກັບການຂາຍ", icon: <HomeIcon size={32} />, isNew: true },
+    { title: "ພາສາ", desc: "ກຳນົດພາສາໃນລະບົບ", icon: <LanguageIcon size={32} />, link: "/dashboard/setting/language" },
+    { title: "ຕັ້ງຄ່າຮ້ານ", desc: "ຂໍ້ມູນກ່ຽວກັບການຂາຍ", icon: <HomeIcon size={32} />, isNew: true , link: "/dashboard/setting/shop" },
   ];
 
   return (

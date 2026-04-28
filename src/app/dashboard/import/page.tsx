@@ -5,10 +5,13 @@ import {
   CalendarIcon, SearchIcon,
   ArrowDownIcon,
   ArrowUpIcon,
-  PlusIcon
+  PlusIcon,
+  BackIcon,
+  DotThreeIcon,
 } from '@/src/components/icons/page';
-import { usePurchaseOrders } from '@/src/features/import/useImport';
+import { usePurchaseOrders, type PurchaseOrder } from '@/src/features/import/useImport';
 import { MdCheck } from 'react-icons/md';
+import { FaRegEye } from 'react-icons/fa';
 
 const statusStyles: Record<string, string> = {
   pending: 'text-orange-500 font-semibold',
@@ -35,6 +38,9 @@ export default function ImportPage() {
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const statusRef = useRef<HTMLDivElement>(null);
   const statusOptions = ['All Status', 'pending', 'received', 'cancelled'];
+
+  // Detail panel
+  const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
 
   // Close dropdowns on outside click
   useEffect(() => {
@@ -222,6 +228,7 @@ export default function ImportPage() {
                   <th className="text-right px-6 py-4 text-sm font-semibold text-gray-100">ລາຍການ</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-100">ຜູ້ສັ່ງ</th>
                   <th className="text-left px-6 py-4 text-sm font-semibold text-gray-100">ສະຖານະ</th>
+                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-100">ຈັດການ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
@@ -247,6 +254,15 @@ export default function ImportPage() {
                         {statusLabels[po.status] || po.status.toUpperCase()}
                       </span>
                     </td>
+                    <td className="px-6 py-4 text-sm">
+                      <button
+                        onClick={() => setSelectedOrder(po)}
+                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        title="ເບິ່ງລາຍລະອຽດ"
+                      >
+                        <FaRegEye className="w-4 h-4" />
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -259,6 +275,168 @@ export default function ImportPage() {
           <p className="text-sm text-gray-500">ທັງໝົດ {filtered.length} ລາຍການ</p>
         </div>
       </section>
+
+      {/* ═══════════════════════════════════════════════ */}
+      {/* Purchase Order Detail Panel (slide-in) */}
+      {/* ═══════════════════════════════════════════════ */}
+      {selectedOrder && (
+        <>
+          <div className="fixed inset-0 bg-black/30 z-30" onClick={() => setSelectedOrder(null)} />
+          <aside className="fixed right-0 top-0 h-full w-full max-w-[600px] bg-white shadow-2xl overflow-y-auto z-40">
+
+            {/* Header */}
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 z-10">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <button
+                    className="text-gray-600 hover:text-gray-900"
+                    onClick={() => setSelectedOrder(null)}
+                    aria-label="Close"
+                  >
+                    <BackIcon size={24} />
+                  </button>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      PO #{selectedOrder.id.slice(0, 8).toUpperCase()}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className={`inline-flex items-center px-2 py-1 rounded-md text-xs font-medium ${
+                        selectedOrder.status === 'received' ? 'bg-green-100 text-green-700' :
+                        selectedOrder.status === 'cancelled' ? 'bg-red-100 text-red-700' :
+                        'bg-orange-100 text-orange-700'
+                      }`}>
+                        {statusLabels[selectedOrder.status] || selectedOrder.status.toUpperCase()}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {new Date(Number(selectedOrder.orderDate)).toLocaleString('lo-LA')}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {selectedOrder.status === 'pending' && (
+                    <button
+                      onClick={() => router.push(`/dashboard/import/checkPurchase?id=${selectedOrder.id}`)}
+                      className="px-4 py-2 text-sm font-medium text-white bg-emerald-700 rounded-lg hover:bg-emerald-800"
+                    >
+                      ກວດສອບ
+                    </button>
+                  )}
+                  <button className="p-2 text-gray-600 hover:text-gray-900">
+                    <DotThreeIcon size={20} />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 space-y-6">
+
+              {/* Items */}
+              <section>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-base font-semibold text-gray-900">ລາຍການສິນຄ້າ</h4>
+                  <span className="text-xs text-gray-500">{selectedOrder.purchaseOrderDetails.length} ລາຍການ</span>
+                </div>
+
+                <div className="space-y-3">
+                  {selectedOrder.purchaseOrderDetails.map((item) => (
+                    <div key={item.id} className="bg-white border border-gray-200 rounded-lg p-4">
+                      <div className="flex gap-4">
+                        <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center text-2xl shrink-0">
+                          🌱
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h5 className="text-sm font-semibold text-gray-900 truncate">{item.product?.name || '-'}</h5>
+                          <p className="text-xs text-gray-500 mt-1">
+                            ຈຳນວນ: {item.quantity}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            ຕົ້ນທຶນ: ₭ {Number(item.product?.costPrice || 0).toLocaleString()}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <p className="text-sm font-semibold text-gray-900">
+                            ₭ {(Number(item.product?.costPrice || 0) * item.quantity).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Order Summary */}
+              <section>
+                <h4 className="text-base font-semibold text-gray-900 mb-3">ສະຫຼຸບຄຳສັ່ງຊື້</h4>
+
+                <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">ຈຳນວນລາຍການ</span>
+                    <span className="font-medium text-gray-900">{selectedOrder.purchaseOrderDetails.length}</span>
+                  </div>
+
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">ຈຳນວນສິນຄ້າລວມ</span>
+                    <span className="font-medium text-gray-900">
+                      {selectedOrder.purchaseOrderDetails.reduce((s, d) => s + d.quantity, 0)}
+                    </span>
+                  </div>
+
+                  <div className="flex justify-between text-base pt-3 border-t border-gray-200">
+                    <span className="font-semibold text-gray-900">ລາຄາລວມ</span>
+                    <span className="font-bold text-gray-900">₭ {Number(selectedOrder.totalPrice).toLocaleString()}</span>
+                  </div>
+
+                  {selectedOrder.stockReceptions && selectedOrder.stockReceptions.length > 0 && (
+                    <div className="pt-3 border-t border-gray-200">
+                      <p className="text-xs font-medium text-gray-500 mb-2">ການຮັບສິນຄ້າ</p>
+                      {selectedOrder.stockReceptions.map((r) => (
+                        <div key={r.id} className="flex justify-between text-sm">
+                          <span className="text-gray-600">
+                            {new Date(Number(r.receptionDate)).toLocaleDateString('lo-LA')}
+                          </span>
+                          <span className="font-medium text-gray-900">
+                            ₭ {Number(r.totalActualPrice).toLocaleString()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </section>
+
+              {/* Supplier & Staff */}
+              <section>
+                <h4 className="text-base font-semibold text-gray-900 mb-3">ຂໍ້ມູນຜູ້ສະໜອງ & ພະນັກງານ</h4>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-2">ຜູ້ສະໜອງ</p>
+                    <p className="text-sm text-gray-900 flex items-center gap-2">
+                      <span>🏭</span> {selectedOrder.supplier?.name || '-'}
+                    </p>
+                    {selectedOrder.supplier?.phoneNumber && (
+                      <p className="text-xs text-gray-500 mt-1">📞 {selectedOrder.supplier.phoneNumber}</p>
+                    )}
+                    {selectedOrder.supplier?.email && (
+                      <p className="text-xs text-gray-500 mt-1">✉️ {selectedOrder.supplier.email}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-medium text-gray-700 mb-2">ຜູ້ສັ່ງ</p>
+                    <p className="text-sm text-gray-900 flex items-center gap-2">
+                      <span>🧑‍💼</span>
+                      {selectedOrder.user ? `${selectedOrder.user.firstName} ${selectedOrder.user.lastName}` : '-'}
+                    </p>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </aside>
+        </>
+      )}
     </div>
   );
 }

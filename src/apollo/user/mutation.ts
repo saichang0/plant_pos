@@ -13,6 +13,7 @@ mutation UpdateUser($input: UpdateUserInput!) {
       email
       profileImageUrl
       shopName
+      bankAccountImageUrl
       role
       status
       createdAt

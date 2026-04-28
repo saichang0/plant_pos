@@ -1,15 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { BACKEND_URLS } from "@/src/lib/config";
+import { gqlFetch } from "@/src/lib/gqlFetch";
 import { GET_PURCHASE_ORDERS_QUERY, GET_IMPORTS_QUERY } from "@/src/apollo/import/query";
 import { CREATE_PURCHASE_ORDER_MUTATION, CONFIRM_PURCHASE_ORDER_MUTATION } from "@/src/apollo/import/mutation";
-
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 // Types
 export interface Supplier {
@@ -85,16 +79,7 @@ export function usePurchaseOrders() {
     setError(null);
 
     try {
-      const response = await fetch(BACKEND_URLS.local, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify({ query: GET_PURCHASE_ORDERS_QUERY }),
-      });
-
-      const result = await response.json();
+      const result = await gqlFetch(GET_PURCHASE_ORDERS_QUERY);
 
       if (result.errors) {
         setError(result.errors[0].message);
@@ -132,16 +117,7 @@ export function useImports() {
     setError(null);
 
     try {
-      const response = await fetch(BACKEND_URLS.local, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify({ query: GET_IMPORTS_QUERY }),
-      });
-
-      const result = await response.json();
+      const result = await gqlFetch(GET_IMPORTS_QUERY);
 
       if (result.errors) {
         setError(result.errors[0].message);
@@ -185,15 +161,7 @@ export function useCreatePurchaseOrder() {
     setSubmitting(true);
 
     try {
-      const response = await fetch(BACKEND_URLS.local, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify({
-          query: CREATE_PURCHASE_ORDER_MUTATION,
-          variables: {
+      const result = await gqlFetch(CREATE_PURCHASE_ORDER_MUTATION, {
             input: {
               supplierId,
               items: items.map((item) => ({
@@ -202,11 +170,7 @@ export function useCreatePurchaseOrder() {
                 costPrice: item.costPrice,
               })),
             },
-          },
-        }),
-      });
-
-      const result = await response.json();
+          });
 
       if (result.errors) {
         return { success: false, message: result.errors[0].message };
@@ -252,15 +216,7 @@ export function useConfirmPurchaseOrder() {
     setSubmitting(true);
 
     try {
-      const response = await fetch(BACKEND_URLS.local, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify({
-          query: CONFIRM_PURCHASE_ORDER_MUTATION,
-          variables: {
+      const result = await gqlFetch(CONFIRM_PURCHASE_ORDER_MUTATION, {
             input: {
               purchaseOrderId,
               items: items.map((item) => ({
@@ -270,11 +226,7 @@ export function useConfirmPurchaseOrder() {
                 status: item.status,
               })),
             },
-          },
-        }),
-      });
-
-      const result = await response.json();
+          });
 
       if (result.errors) {
         return { success: false, message: result.errors[0].message };

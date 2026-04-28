@@ -1,22 +1,22 @@
 import { gql } from 'graphql-request';
 
-export const GET_CATEGORIES_QUERY = gql`
-query GetCategories {
-  getCategories {
+export const GET_UNITS_QUERY = gql`
+query GetUnits {
+  getUnits {
     status
     message
-    categories {
+    units {
       id
       name
+      weightInGrams
+      isActive
       createdBy
       createdAt
+      updatedAt
       creator {
         id
         firstName
         lastName
-      }
-      products {
-        id
       }
     }
   }

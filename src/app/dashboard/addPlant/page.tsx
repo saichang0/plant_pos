@@ -1,9 +1,9 @@
-import AddNewPlantForm from "@/src/components/addNewPlantForm";
+import PlantForm from "@/src/components/plantForm";
 
 export default function AddPlantPage() {
   return (
     <div>
-      <AddNewPlantForm />
+      <PlantForm />
     </div>
   );
 }

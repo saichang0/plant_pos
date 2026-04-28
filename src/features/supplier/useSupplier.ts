@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { BACKEND_URLS } from "@/src/lib/config";
+import { gqlFetch } from "@/src/lib/gqlFetch";
 import { GET_SUPPLIERS_QUERY } from "@/src/apollo/supplier/query";
 import {
   CREATE_SUPPLIER_MUTATION,
@@ -34,12 +34,6 @@ const initialFormData: SupplierFormData = {
   address: "",
 };
 
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 // Hook for fetching suppliers list
 export function useSuppliers() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
@@ -51,18 +45,7 @@ export function useSuppliers() {
     setError(null);
 
     try {
-      const response = await fetch(BACKEND_URLS.local, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify({
-          query: GET_SUPPLIERS_QUERY,
-        }),
-      });
-
-      const result = await response.json();
+      const result = await gqlFetch(GET_SUPPLIERS_QUERY);
 
       if (result.errors) {
         setError(result.errors[0].message);
@@ -104,26 +87,14 @@ export function useCreateSupplier() {
     setSubmitting(true);
 
     try {
-      const response = await fetch(BACKEND_URLS.local, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify({
-          query: CREATE_SUPPLIER_MUTATION,
-          variables: {
+      const result = await gqlFetch(CREATE_SUPPLIER_MUTATION, {
             input: {
               name: formData.name,
               phoneNumber: formData.phoneNumber,
               email: formData.email,
               address: formData.address,
             },
-          },
-        }),
-      });
-
-      const result = await response.json();
+          });
 
       if (result.errors) {
         return { success: false, message: result.errors[0].message };
@@ -163,15 +134,7 @@ export function useUpdateSupplier() {
     setSubmitting(true);
 
     try {
-      const response = await fetch(BACKEND_URLS.local, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify({
-          query: UPDATE_SUPPLIER_MUTATION,
-          variables: {
+      const result = await gqlFetch(UPDATE_SUPPLIER_MUTATION, {
             input: {
               id,
               data: {
@@ -181,11 +144,7 @@ export function useUpdateSupplier() {
                 address: data.address,
               },
             },
-          },
-        }),
-      });
-
-      const result = await response.json();
+          });
 
       if (result.errors) {
         return { success: false, message: result.errors[0].message };
@@ -223,21 +182,9 @@ export function useDeleteSupplier() {
     setSubmitting(true);
 
     try {
-      const response = await fetch(BACKEND_URLS.local, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify({
-          query: DELETE_SUPPLIER_MUTATION,
-          variables: {
+      const result = await gqlFetch(DELETE_SUPPLIER_MUTATION, {
             input: { id },
-          },
-        }),
-      });
-
-      const result = await response.json();
+          });
 
       if (result.errors) {
         return { success: false, message: result.errors[0].message };

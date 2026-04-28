@@ -8,17 +8,11 @@ import {
 } from '@/src/components/icons/page';
 import { useImports } from '@/src/features/import/useImport';
 import { useToast } from '@/src/components/toast';
-import { BACKEND_URLS } from '@/src/lib/config';
+import { gqlFetch } from '@/src/lib/gqlFetch';
 import { UPDATE_STOCK_DETAIL_MUTATION, DELETE_STOCK_DETAIL_MUTATION } from '@/src/apollo/import/mutation';
-import { UPDATE_PRODUCT_STOCK_MUTATION } from '@/src/apollo/product/mutation';
+import { UPDATE_PRODUCT_MUTATION } from '@/src/apollo/product/mutation';
 
 const LOW_STOCK_THRESHOLD = 5;
-
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 export default function InventoryPage() {
   const { imports, loading, error, refetch } = useImports();
@@ -94,19 +88,7 @@ export default function InventoryPage() {
     if (!deleteConfirm) return;
     setDeleting(true);
     try {
-      const response = await fetch(BACKEND_URLS.local, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify({
-          query: DELETE_STOCK_DETAIL_MUTATION,
-          variables: { input: { id: deleteConfirm.id } },
-        }),
-      });
-
-      const result = await response.json();
+      const result = await gqlFetch(DELETE_STOCK_DETAIL_MUTATION, { input: { id: deleteConfirm.id } });
       const data = result.data?.deleteStockReceptionDetail;
       if (data?.status) {
         showToast("ລົບສຳເລັດແລ້ວ", "success");
@@ -126,46 +108,22 @@ export default function InventoryPage() {
     setSaving(true);
     try {
       // Update quantityReceived on stockReceptionDetail
-      const qtyResponse = await fetch(BACKEND_URLS.local, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify({
-          query: UPDATE_STOCK_DETAIL_MUTATION,
-          variables: {
+      const qtyResult = await gqlFetch(UPDATE_STOCK_DETAIL_MUTATION, {
             input: {
               id: detailId,
               data: { quantityReceived: editQty },
             },
-          },
-        }),
-      });
-
-      const qtyResult = await qtyResponse.json();
+          });
       if (qtyResult.errors) {
         showToast(qtyResult.errors[0].message, "error");
         return;
       }
 
       // Update salePrice on product
-      const priceResponse = await fetch(BACKEND_URLS.local, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify({
-          query: UPDATE_PRODUCT_STOCK_MUTATION,
-          variables: {
+      const priceResult = await gqlFetch(UPDATE_PRODUCT_MUTATION, {
             id: editProductId,
             input: { salePrice: editSalePrice },
-          },
-        }),
-      });
-
-      const priceResult = await priceResponse.json();
+          });
       if (priceResult.errors) {
         showToast(priceResult.errors[0].message, "error");
         return;

@@ -1,16 +1,10 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { BACKEND_URLS } from "@/src/lib/config";
+import { gqlFetch } from "@/src/lib/gqlFetch";
 import { GET_USER_QUERY } from "@/src/apollo/user/query";
 import { UPDATE_USER_MUTATION } from "@/src/apollo/user/mutation";
 import type { User } from "@/src/types/auth";
-
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 function getCurrentUserId(): string | null {
   if (typeof window === "undefined") return null;
@@ -39,19 +33,7 @@ export function useCurrentUser() {
     setError(null);
 
     try {
-      const response = await fetch(BACKEND_URLS.local, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify({
-          query: GET_USER_QUERY,
-          variables: { id: userId },
-        }),
-      });
-
-      const result = await response.json();
+      const result = await gqlFetch(GET_USER_QUERY, { id: userId });
 
       if (result.errors) {
         setError(result.errors[0].message);
@@ -88,26 +70,15 @@ export function useUpdateUser() {
       lastName?: string;
       shopName?: string;
       profileImageUrl?: string;
+      bankAccountImageUrl?: string;
     }
   ): Promise<{ success: boolean; message: string; user?: User }> => {
     setSubmitting(true);
 
     try {
-      const response = await fetch(BACKEND_URLS.local, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify({
-          query: UPDATE_USER_MUTATION,
-          variables: {
+      const result = await gqlFetch(UPDATE_USER_MUTATION, {
             input: { id: userId, data },
-          },
-        }),
-      });
-
-      const result = await response.json();
+          });
 
       if (result.errors) {
         return { success: false, message: result.errors[0].message };

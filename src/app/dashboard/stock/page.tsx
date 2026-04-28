@@ -1,13 +1,19 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { useProducts, useCategories } from "@/src/features/stock/useProduct";
-import { SearchIcon, RefreshIcon, ArrowDownIcon, ArrowUpIcon, CalendarIcon } from "@/src/components/icons/page";
+import { useRouter } from "next/navigation";
+import { useProducts, useCategories, useDeleteProduct } from "@/src/features/stock/useProduct";
+import { SearchIcon, RefreshIcon, ArrowDownIcon, ArrowUpIcon, CalendarIcon, WarningIcon, EditIcon, TrashIcon } from "@/src/components/icons/page";
+import { useToast } from "@/src/components/toast";
 
 export default function StockPage() {
+  const router = useRouter();
+  const { showToast } = useToast();
   const { products, total, loading, error, refetch } = useProducts();
   const { categories } = useCategories();
+  const { submitting: deleting, deleteProduct } = useDeleteProduct();
   const [searchQuery, setSearchQuery] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState<{ id: string; name: string } | null>(null);
 
   // Category filter
   const [selectedCategory, setSelectedCategory] = useState("ໝວດໝູ່ທັງໝົດ");
@@ -223,7 +229,7 @@ export default function StockPage() {
                   <th className="text-right px-6 py-4 text-sm font-semibold text-gray-100">ລາຄາຕົ້ນທຶນ</th>
                   <th className="text-right px-6 py-4 text-sm font-semibold text-gray-100">ລາຄາຂາຍ</th>
                   <th className="text-right px-6 py-4 text-sm font-semibold text-gray-100">ຈຳນວນ</th>
-                  <th className="text-center px-6 py-4 text-sm font-semibold text-gray-100">ສະຖານະ</th>
+                  <th className="text-center px-6 py-4 text-sm font-semibold text-gray-100">ຈັດການ</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -257,20 +263,32 @@ export default function StockPage() {
                       {formatPrice(product.salePrice)}
                     </td>
                     <td className="px-6 py-4 text-sm text-right">
-                      <span className={product.stockQuantity > 0 ? "text-green-700 font-medium" : "text-red-500 font-medium"}>
+                      <span className={product.stockQuantity > 0 || Number(product.stockWeight) > 0 ? "text-green-700 font-medium" : "text-red-500 font-medium"}>
                         {formatPrice(product.stockQuantity)}
+                        {Number(product.stockWeight) > 0 && (
+                          <span className="text-xs text-gray-400 block">
+                            ({(Number(product.stockWeight) / 1000).toFixed(1)} kg)
+                          </span>
+                        )}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-center">
-                      <span
-                        className={`inline-flex px-2.5 py-1 text-xs font-medium rounded-full ${
-                          product.isActive
-                            ? "bg-green-100 text-green-700 border border-green-200"
-                            : "bg-red-100 text-red-700 border border-red-200"
-                        }`}
-                      >
-                        {product.isActive ? "Active" : "Inactive"}
-                      </span>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-center gap-2">
+                        <button
+                          onClick={() => router.push(`/dashboard/stock/update?id=${product.id}`)}
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          title="ແກ້ໄຂ"
+                        >
+                          <EditIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirm({ id: product.id, name: product.name })}
+                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                          title="ລຶບ"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -279,6 +297,54 @@ export default function StockPage() {
           </div>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
+          <div className="bg-white rounded-2xl p-6 w-[400px] shadow-xl">
+            <div className="flex flex-col items-center text-center">
+              <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center mb-4">
+                <WarningIcon className="w-7 h-7 text-red-500" />
+              </div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">
+                ຢືນຢັນການລຶບ
+              </h3>
+              <p className="text-sm text-gray-500">
+                ທ່ານແນ່ໃຈບໍ່ວ່າຕ້ອງການລຶບສິນຄ້າ{" "}
+                <span className="font-semibold text-gray-800">
+                  &quot;{deleteConfirm.name}&quot;
+                </span>
+                ?
+              </p>
+            </div>
+
+            <div className="flex gap-2 mt-6">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 hover:bg-gray-50"
+              >
+                ຍົກເລີກ
+              </button>
+              <button
+                onClick={async () => {
+                  const result = await deleteProduct(deleteConfirm.id);
+                  if (result.success) {
+                    showToast("ລຶບສິນຄ້າສຳເລັດ", "success");
+                    setDeleteConfirm(null);
+                    refetch();
+                  } else {
+                    showToast(result.message, "error");
+                  }
+                }}
+                disabled={deleting}
+                className="flex-1 py-2.5 bg-red-500 text-white rounded-xl text-sm font-semibold hover:bg-red-600 disabled:bg-gray-300"
+              >
+                {deleting ? "ກຳລັງລຶບ..." : "ລຶບ"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -326,7 +326,7 @@ export default function SupplierPage() {
               </button>
               <button
                 onClick={editingSupplier ? handleUpdate : handleCreate}
-                disabled={(submitting || updating) || !formData.name || !formData.phoneNumber || !formData.email || !formData.address}
+                disabled={(submitting || updating) || !formData.name || !formData.phoneNumber}
                 className="px-5 py-2.5 text-sm font-medium text-white bg-emerald-900 rounded-lg hover:bg-emerald-950 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {(submitting || updating) ? "ກຳລັງບັນທຶກ..." : "ບັນທຶກ"}

@@ -27,21 +27,21 @@ export const LOGIN_MUTATION = gql`
 `;
 
 export const REQUEST_OTP_MUTATION = gql`
-  mutation RequestUserOTP($data: RequestOTPInput!) {
+  mutation RequestUserOTP($data: UserRequestOTPInput!) {
     requestUserOTP(data: $data) {
       status
       message
-      tag
+      tap
     }
   }
 `;
 
 export const VERIFY_USER_OTP = gql`
-mutation VerifyUserOTP($data: VerifyOTPInput!) {
+mutation VerifyUserOTP($data: UserVerifyOTPInput!) {
   verifyUserOTP(data: $data) {
     status
     message
-    tag
+    tap
   }
 }`;
 

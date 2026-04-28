@@ -2,15 +2,15 @@
 
 import Sidebar from '@/src/components/sidebar';
 import { ToastProvider } from '@/src/components/toast';
-import React, { useState } from 'react';
-import { FaBars } from "react-icons/fa";
+import React, { useState, useRef, useEffect } from 'react';
+import { FaBars, FaUser, FaSignOutAlt } from "react-icons/fa";
 import { IoIosSearch } from 'react-icons/io';
 import { NotiIcon } from '@/src/components/icons/page';
 import { GoPlus } from 'react-icons/go';
-import { IoPersonCircleSharp } from 'react-icons/io5';
 import { MdOutlinePersonalInjury } from 'react-icons/md';
 import { useRouter } from 'next/navigation';
 import { GRADIENTS } from '@/src/lib/colors';
+import { useCurrentUser } from '@/src/features/user/useUser';
 
 
 export default function DashboardLayout({
@@ -20,7 +20,27 @@ export default function DashboardLayout({
 }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const { user: currentUser } = useCurrentUser();
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target as Node)) {
+        setProfileMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    if (typeof window !== 'undefined') {
+      localStorage.clear();
+    }
+    router.push('/auth/login');
+  };
 
   return (
     <ToastProvider>
@@ -47,15 +67,22 @@ export default function DashboardLayout({
             </button>
 
             <div className="flex items-center justify-between w-full">
-              {/* Search bar */}
-              <div className="hidden md:block">
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder="ຄົ້ນຫາ..."
-                    className="w-64 px-4 py-2 pl-10 bg-white border border-slate-600/50 rounded-xl text-slate-600 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-transparent transition-all"
-                  />
-                  <IoIosSearch className="absolute left-3 top-2.5 w-5 h-5 text-slate-600" />
+              {/* Shop name + Search bar */}
+              <div className="flex items-center gap-6">
+                {currentUser?.shopName && (
+                  <h1 className="hidden md:block text-xl font-bold text-slate-800 truncate max-w-xs">
+                    {currentUser.shopName}
+                  </h1>
+                )}
+                <div className="hidden md:block">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="ຄົ້ນຫາ..."
+                      className="w-64 px-4 py-2 pl-10 bg-white border border-slate-600/50 rounded-xl text-slate-600 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-green-500/50 focus:border-transparent transition-all"
+                    />
+                    <IoIosSearch className="absolute left-3 top-2.5 w-5 h-5 text-slate-600" />
+                  </div>
                 </div>
               </div>
 
@@ -73,9 +100,36 @@ export default function DashboardLayout({
                     2
                   </span>
                 </button>
-                <button>
-                  <MdOutlinePersonalInjury className='w-7 h-7 font-bold' />
-                </button>
+                <div className="relative" ref={profileMenuRef}>
+                  <button
+                    onClick={() => setProfileMenuOpen(!profileMenuOpen)}
+                    className="text-slate-800 hover:text-slate-600 transition-colors"
+                  >
+                    <MdOutlinePersonalInjury className='w-7 h-7 font-bold' />
+                  </button>
+                  {profileMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
+                      <button
+                        onClick={() => {
+                          setProfileMenuOpen(false);
+                          router.push('/dashboard/setting/user');
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <FaUser className="w-4 h-4 text-gray-500" />
+                        ເບິ່ງໂປຣຟາຍ
+                      </button>
+                      <div className="border-t border-gray-100" />
+                      <button
+                        onClick={handleLogout}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <FaSignOutAlt className="w-4 h-4" />
+                        ອອກຈາກລະບົບ
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

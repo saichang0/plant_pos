@@ -10,14 +10,29 @@ query Products($keyword: String, $paginate: PaginationInput, $filter: FilterInpu
     data {
       id
       categoryId
+      category {
+        id
+        name
+      }
       name
       imageUrl
       description
       size
       ageMonths
+      unit {
+        id
+        name
+        weightInGrams
+      }
+      weightPerUnit
+
       stockQuantity
+      stockWeight
       costPrice
       salePrice
+      pricePerHalfBag
+      pricePer12Kg
+      pricePerKg
       isPopular
       isSpecialOffer
       discount
@@ -40,14 +55,29 @@ query Product($where: entityInput) {
     data {
       id
       categoryId
+      category {
+        id
+        name
+      }
       name
       imageUrl
       description
       size
       ageMonths
+      unit {
+        id
+        name
+        weightInGrams
+      }
+      weightPerUnit
+
       stockQuantity
+      stockWeight
       costPrice
       salePrice
+      pricePerHalfBag
+      pricePer12Kg
+      pricePerKg
       isPopular
       isSpecialOffer
       discount

@@ -8,19 +8,64 @@ import {
   ArrowDownIcon,
   ArrowUpIcon,
 } from '@/src/components/icons/page';
+import { useRouter } from 'next/navigation';
 import { useToast } from '@/src/components/toast';
-import { useCreateProduct, useCategories } from '@/src/features/stock/useProduct';
+import { useCreateProduct, useCategories, useProduct, useUpdateProduct } from '@/src/features/stock/useProduct';
+import { useUnitList } from '@/src/features/unit/useUnit';
+import type { Unit } from '@/src/features/unit/useUnit';
 import { Category } from "../types/auth";
 
-export default function AddNewPlantForm() {
+interface PlantFormProps {
+  productId?: string | null;
+}
+
+export default function PlantForm({ productId }: PlantFormProps) {
+  const router = useRouter();
   const { showToast } = useToast();
+  const isEditMode = !!productId;
   const { formData, setFormData, submitting, createProduct, resetForm } = useCreateProduct();
+  const { submitting: updating, updateProduct } = useUpdateProduct();
+  const { product: existingProduct, loading: productLoading } = useProduct(productId || null);
   const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
+  const { units, loading: unitsLoading, error: unitsError } = useUnitList();
+
+  // Pre-fill form when editing
+  useEffect(() => {
+    if (isEditMode && existingProduct) {
+      setFormData({
+        name: existingProduct.name || "",
+        categoryId: existingProduct.categoryId || "",
+        imageUrl: existingProduct.imageUrl || "",
+        description: existingProduct.description || "",
+        size: existingProduct.size || "",
+        unit: existingProduct.unit?.id || "",
+        weightPerUnit: existingProduct.weightPerUnit ? Number(existingProduct.weightPerUnit) / 1000 : 0,
+        ageMonths: existingProduct.ageMonths || 0,
+        stockQuantity: existingProduct.stockQuantity || 0,
+        costPrice: existingProduct.costPrice || 0,
+        salePrice: existingProduct.salePrice || 0,
+        pricePerHalfBag: existingProduct.pricePerHalfBag ? Number(existingProduct.pricePerHalfBag) : 0,
+        pricePer12Kg: existingProduct.pricePer12Kg ? Number(existingProduct.pricePer12Kg) : 0,
+        pricePerKg: existingProduct.pricePerKg ? Number(existingProduct.pricePerKg) : 0,
+        discount: existingProduct.discount || 0,
+        isSpecialOffer: existingProduct.isSpecialOffer || false,
+        isActive: existingProduct.isActive ?? true,
+        isFavorite: false,
+        isPopular: existingProduct.isPopular || false,
+        imageFile: null,
+      });
+      if (existingProduct.imageUrl) {
+        setImagePreview(existingProduct.imageUrl);
+      }
+    }
+  }, [isEditMode, existingProduct]);
 
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const categoryDropdownRef = React.useRef<HTMLDivElement>(null);
   const [sizeDropdownOpen, setSizeDropdownOpen] = useState(false);
   const sizeDropdownRef = React.useRef<HTMLDivElement>(null);
+  const [unitDropdownOpen, setUnitDropdownOpen] = useState(false);
+  const unitDropdownRef = React.useRef<HTMLDivElement>(null);
   const sizeOptions = ['Small', 'Medium', 'Large'];
 
   // Close dropdowns when clicking outside
@@ -32,12 +77,15 @@ export default function AddNewPlantForm() {
       if (sizeDropdownRef.current && !sizeDropdownRef.current.contains(event.target as Node)) {
         setSizeDropdownOpen(false);
       }
+      if (unitDropdownRef.current && !unitDropdownRef.current.contains(event.target as Node)) {
+        setUnitDropdownOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const numberFields = ['ageMonths', 'stockQuantity', 'costPrice', 'salePrice', 'discount'];
+  const numberFields = ['ageMonths', 'weightPerUnit', 'stockQuantity', 'costPrice', 'salePrice', 'pricePerHalfBag', 'pricePer12Kg', 'pricePerKg', 'discount'];
 
   const formatNumber = (value: number | string): string => {
     const num = typeof value === 'string' ? parseFloat(value) : value;
@@ -81,18 +129,53 @@ export default function AddNewPlantForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const result = await createProduct();
-    if (result.success) {
-      showToast(result.message, 'success');
-      setImagePreview(null);
+
+    if (isEditMode && productId) {
+      const input: Record<string, unknown> = {
+        name: formData.name,
+        categoryId: formData.categoryId,
+        description: formData.description,
+        size: formData.size,
+        unitId: formData.unit || undefined,
+        weightPerUnit: (Number(formData.weightPerUnit) || 0) * 1000 || undefined,
+        ageMonths: Number(formData.ageMonths) || 0,
+        stockQuantity: Number(formData.stockQuantity) || 0,
+        stockWeight: (Number(formData.weightPerUnit) || 0) * 1000 * (Number(formData.stockQuantity) || 0),
+        costPrice: Number(formData.costPrice) || 0,
+        salePrice: Number(formData.salePrice) || 0,
+        pricePerHalfBag: Number(formData.pricePerHalfBag) || undefined,
+        pricePer12Kg: Number(formData.pricePer12Kg) || undefined,
+        pricePerKg: Number(formData.pricePerKg) || undefined,
+        discount: Number(formData.discount) || 0,
+        isSpecialOffer: formData.isSpecialOffer,
+        isActive: formData.isActive,
+        isPopular: formData.isPopular,
+      };
+      const result = await updateProduct(productId, input);
+      if (result.success) {
+        showToast(result.message, 'success');
+        router.push('/dashboard/stock');
+      } else {
+        showToast(result.message, 'error');
+      }
     } else {
-      showToast(result.message, 'error');
+      const result = await createProduct();
+      if (result.success) {
+        showToast(result.message, 'success');
+        setImagePreview(null);
+      } else {
+        showToast(result.message, 'error');
+      }
     }
   };
 
   const handleCancel = () => {
-    resetForm();
-    setImagePreview(null);
+    if (isEditMode) {
+      router.push('/dashboard/stock');
+    } else {
+      resetForm();
+      setImagePreview(null);
+    }
   };
 
   return (
@@ -100,7 +183,7 @@ export default function AddNewPlantForm() {
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-4xl font-bold text-slate-800">
-          ເພີ່ມຕົ້ນໄມ້ໃໝ່
+          {isEditMode ? 'ແກ້ໄຂສິນຄ້າ' : 'ເພີ່ມຕົ້ນໄມ້ໃໝ່'}
         </h1>
       </div>
 
@@ -283,10 +366,87 @@ export default function AddNewPlantForm() {
                 </div>
               </div>
 
-              {/* Age (Months) */}
+              {/* Unit */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Age (Months)
+                  ຫົວໜ່ວຍ
+                </label>
+                {unitsLoading ? (
+                  <div className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-gray-50 text-gray-500">
+                    Loading units...
+                  </div>
+                ) : unitsError ? (
+                  <div className="w-full px-4 py-3 border border-red-300 rounded-xl bg-red-50 text-red-500">
+                    Error loading units
+                  </div>
+                ) : (
+                  <div className="relative" ref={unitDropdownRef}>
+                    <button
+                      type="button"
+                      onClick={() => setUnitDropdownOpen(!unitDropdownOpen)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white flex items-center justify-between text-left"
+                    >
+                      <span className={formData.unit ? 'text-gray-900' : 'text-gray-500'}>
+                        {formData.unit
+                          ? units.find((u: Unit) => u.id === formData.unit)?.name
+                          : 'ເລືອກຫົວໜ່ວຍ'}
+                      </span>
+                      {unitDropdownOpen ? (
+                        <ArrowUpIcon size={20} className="text-gray-500" />
+                      ) : (
+                        <ArrowDownIcon size={20} className="text-gray-500" />
+                      )}
+                    </button>
+                    {unitDropdownOpen && (
+                      <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-xl shadow-lg max-h-60 overflow-auto">
+                        <li
+                          onClick={() => {
+                            setFormData(prev => ({ ...prev, unit: '' }));
+                            setUnitDropdownOpen(false);
+                          }}
+                          className="px-4 py-3 text-gray-500 hover:bg-green-50 cursor-pointer rounded-t-xl"
+                        >
+                          ເລືອກຫົວໜ່ວຍ
+                        </li>
+                        {units.map((unit: Unit) => (
+                          <li
+                            key={unit.id}
+                            onClick={() => {
+                              setFormData(prev => ({ ...prev, unit: unit.id }));
+                              setUnitDropdownOpen(false);
+                            }}
+                            className={`px-4 py-3 hover:bg-green-50 cursor-pointer last:rounded-b-xl ${
+                              formData.unit === unit.id ? 'bg-green-100 text-green-800 font-medium' : 'text-gray-700'
+                            }`}
+                          >
+                            {unit.name}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Weight Per Unit (grams) */}
+              {/* <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  ນ້ຳໜັກຕໍ່ຫົວໜ່ວຍ (ກິໂລ)
+                </label>
+                <input
+                  type="text"
+                  name="weightPerUnit"
+                  value={formatNumber(formData.weightPerUnit)}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
+                  placeholder="ນ້ຳໜັກຕໍ່ຫົວໜ່ວຍ (ກິໂລ)"
+                />
+              </div> */}
+
+              {/* Age (Months) */}
+              {/* <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  ອາຍຸ (ເດືອນ)
                 </label>
                 <input
                   type="text"
@@ -294,14 +454,14 @@ export default function AddNewPlantForm() {
                   value={formatNumber(formData.ageMonths)}
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
-                  placeholder="Enter age in months"
+                  placeholder="ໃສ່ອາຍຸເປັນເດືອນ"
                 />
-              </div>
+              </div> */}
 
               {/* Stock Quantity */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Stock Quantity
+                  ຈຳນວນສິນຄ້າ
                 </label>
                 <input
                   type="text"
@@ -309,14 +469,14 @@ export default function AddNewPlantForm() {
                   value={formatNumber(formData.stockQuantity)}
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
-                  placeholder="Enter stock quantity"
+                  placeholder="ຈຳນວນ (ຖົງ, ຕົ້ນ, ...)"
                 />
               </div>
 
               {/* Cost Price */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Cost Price
+                  ລາຄາຊື້
                 </label>
                 <input
                   type="text"
@@ -324,14 +484,14 @@ export default function AddNewPlantForm() {
                   value={formatNumber(formData.costPrice)}
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
-                  placeholder="Enter cost price"
+                  placeholder="ລາຄາຊື້ເຂົ້າ"
                 />
               </div>
 
               {/* Sale Price */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Sale Price
+                  ລາຄາຂາຍ
                 </label>
                 <input
                   type="text"
@@ -339,12 +499,57 @@ export default function AddNewPlantForm() {
                   value={formatNumber(formData.salePrice)}
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
-                  placeholder="Enter sale price"
+                  placeholder="ລາຄາຂາຍຕໍ່ຫົວໜ່ວຍ"
                 />
               </div>
 
+              {/* Price Per Half Bag */}
+              {/* <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  ລາຄາເຄິ່ງຖົງ
+                </label>
+                <input
+                  type="text"
+                  name="pricePerHalfBag"
+                  value={formatNumber(formData.pricePerHalfBag)}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
+                  placeholder="ຖ້າບໍ່ໃສ່ = ລາຄາຖົງ / 2"
+                />
+              </div> */}
+
+              {/* Price Per 12Kg */}
+              {/* <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  ລາຄາ 12 ກິໂລ
+                </label>
+                <input
+                  type="text"
+                  name="pricePer12Kg"
+                  value={formatNumber(formData.pricePer12Kg)}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
+                  placeholder="ລາຄາຂາຍ 12 ກິໂລ (ຖ້າມີ)"
+                />
+              </div> */}
+
+              {/* Price Per Kg */}
+              {/* <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  ລາຄາຕໍ່ກິໂລ
+                </label>
+                <input
+                  type="text"
+                  name="pricePerKg"
+                  value={formatNumber(formData.pricePerKg)}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
+                  placeholder="ລາຄາຂາຍຕໍ່ກິໂລ (ຖ້າມີ)"
+                />
+              </div> */}
+
               {/* Discount */}
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Discount (%)
                 </label>
@@ -356,7 +561,7 @@ export default function AddNewPlantForm() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
                   placeholder="Enter discount percentage"
                 />
-              </div>
+              </div> */}
 
               {/* Special Offers */}
               <div className="md:col-span-2">
@@ -371,23 +576,8 @@ export default function AddNewPlantForm() {
                   Special Offer
                 </label>
               </div>
-
-              {/* Active Status */}
-              <div className="md:col-span-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-4">
-                  <input
-                    type="checkbox"
-                    name="isActive"
-                    checked={formData.isActive}
-                    onChange={handleInputChange}
-                    className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                  />
-                  Active
-                </label>
-              </div>
-
               {/* Popular */}
-              <div className="md:col-span-2">
+              {/* <div className="md:col-span-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-4">
                   <input
                     type="checkbox"
@@ -398,7 +588,7 @@ export default function AddNewPlantForm() {
                   />
                   Popular
                 </label>
-              </div>
+              </div> */}
             </div>
           </div>
 
@@ -415,11 +605,11 @@ export default function AddNewPlantForm() {
             <button
               onClick={handleSubmit}
               type="submit"
-              disabled={submitting}
+              disabled={submitting || updating}
               className="flex items-center gap-2 px-8 py-3 bg-green-700 text-white font-semibold rounded-xl hover:bg-green-800 transition-colors shadow-lg hover:shadow-xl transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <SaveIcon size={18} />
-              {submitting ? 'ກຳລັງບັນທຶກ...' : 'ບັນທຶກພືດ'}
+              {(submitting || updating) ? 'ກຳລັງບັນທຶກ...' : isEditMode ? 'ບັນທຶກການແກ້ໄຂ' : 'ບັນທຶກພືດ'}
             </button>
           </div>
         </form>

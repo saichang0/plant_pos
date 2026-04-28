@@ -1,14 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { BACKEND_URLS } from "@/src/lib/config";
+import { gqlFetch } from "@/src/lib/gqlFetch";
 import { GET_DASHBOARD_QUERY } from "@/src/apollo/dashboard/query";
-
-function getAuthHeaders(): Record<string, string> {
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 export interface DailyStat {
   date: string;
@@ -49,16 +43,7 @@ export function useDashboard() {
     setError(null);
 
     try {
-      const response = await fetch(BACKEND_URLS.local, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeaders(),
-        },
-        body: JSON.stringify({ query: GET_DASHBOARD_QUERY }),
-      });
-
-      const result = await response.json();
+      const result = await gqlFetch(GET_DASHBOARD_QUERY);
 
       if (result.errors) {
         setError(result.errors[0].message);

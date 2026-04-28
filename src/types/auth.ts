@@ -12,7 +12,7 @@ export interface RequestOTPInput {
 export interface RequestOTPResponse {
   status: boolean;
   message: string;
-  tag: string;
+  tap: string;
 }
 
 export interface User {
@@ -22,6 +22,7 @@ export interface User {
   phoneNumber: string;
   profileImageUrl: string;
   shopName: string;
+  bankAccountImageUrl?: string;
   email: string;
   role: string;
   status: string;
@@ -47,7 +48,7 @@ export interface VerifyOTPInput {
 export interface VerifyOTPResponse {
   status: boolean;
   message: string;
-  tag?: string;
+  tap?: string;
 }
 
 export interface ResetPasswordInput {

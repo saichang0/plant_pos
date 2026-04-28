@@ -23,6 +23,15 @@ html {
   scrollbar-width: none;
 }
 
+/* Utility: hide scrollbar on specific elements */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 html,
 body {
   margin: 0;
