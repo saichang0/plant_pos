@@ -21,12 +21,11 @@ function formatDate(value: string | number | Date | undefined) {
   if (!value) return "";
   const d = new Date(typeof value === "string" && /^\d+$/.test(value) ? Number(value) : value);
   if (isNaN(d.getTime())) return String(value);
-  return d.toLocaleString(undefined, {
+  // Numeric only — e.g. "5/21/2026".
+  return d.toLocaleDateString("en-US", {
     year: "numeric",
-    month: "short",
+    month: "numeric",
     day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
   });
 }
 
@@ -122,7 +121,7 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
           <section>
             <div className="flex items-center justify-between mb-3">
               <h4 className="text-base font-semibold text-gray-900">
-                Order Items ({order.saleDetails.length})
+                ລາຍການສັ່ງຊື້ ({order.saleDetails.length})
               </h4>
             </div>
 
@@ -183,15 +182,15 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
           {/* Order Summary */}
           <section>
             <h4 className="text-base font-semibold text-gray-900 mb-3">
-              Order Summary
+              ສະຫຼຸບການສັ່ງຊື້
             </h4>
 
             <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Subtotal</span>
+                <span className="text-gray-600">ລວມຍອດ</span>
                 <div className="text-right">
                   <span className="text-gray-500 mr-2">
-                    {itemCount} {itemCount === 1 ? "item" : "items"}
+                    {itemCount} {itemCount === 1 ? "ລາຍການ" : "ລາຍການ"}
                   </span>
                   <span className="font-medium text-gray-900">
                     {formatMoney(subTotal)}
@@ -201,7 +200,7 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
 
               {Number(order.discountAmount) > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Discount</span>
+                  <span className="text-gray-600">ສ່ວນຫຼຸດ</span>
                   <span className="font-medium text-gray-900">
                     -{formatMoney(order.discountAmount)}
                   </span>
@@ -218,14 +217,14 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
               )}
 
               <div className="flex justify-between text-sm pt-3 border-t border-gray-200">
-                <span className="font-semibold text-gray-900">Total</span>
+                <span className="font-semibold text-gray-900">ທັງໝົດ</span>
                 <span className="font-bold text-gray-900">
                   {formatMoney(order.totalAmount)}
                 </span>
               </div>
 
               <div className="flex justify-between text-sm pt-3 border-t border-gray-200">
-                <span className="text-gray-600">Paid by customer</span>
+                <span className="text-gray-600">ຈ່າຍເງິນໂດຍລູກຄ້າ</span>
                 <span className="font-medium text-gray-900">
                   {formatMoney(paidByCustomer)}
                 </span>
@@ -233,7 +232,7 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
 
               {order.note && (
                 <p className="text-xs text-gray-500 pt-3 border-t border-gray-200">
-                  Note: {order.note}
+                  ໝາຍເຫດ: {order.note}
                 </p>
               )}
 
@@ -243,14 +242,14 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
                   onClick={() => onCancel(order)}
                   className="px-4 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  Cancel order
+                  ຍົກເລີກການສັ່ງຊື້
                 </button>
                 <button
                   disabled={!canConfirm || busy}
                   onClick={() => onConfirm(order)}
                   className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed"
                 >
-                  {busy ? "Working…" : "Confirm order"}
+                  {busy ? "ກຳລັງຢືນຢັນ..." : "ຢືນຢັນການສັ່ງຊື້"}
                 </button>
               </div>
             </div>
@@ -260,7 +259,7 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
           {order.deliveries && order.deliveries.length > 0 && (
             <section>
               <h4 className="text-base font-semibold text-gray-900 mb-3">
-                Delivery
+                ການຈັດສົ່ງ
               </h4>
               <div className="bg-white border border-gray-200 rounded-lg p-4 space-y-2">
                 {order.deliveries.map((d) => (
@@ -297,7 +296,7 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
           {order.payments.some((p) => p.slipImageUrl) && (
             <section>
               <h4 className="text-base font-semibold text-gray-900 mb-3">
-                Payment Slip
+                ໃບຮັບເງິນ
               </h4>
               <div className="space-y-3">
                 {order.payments
@@ -318,14 +317,14 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
           {/* Customer Details */}
           <section>
             <h4 className="text-base font-semibold text-gray-900 mb-3">
-              Customer Details
+              ລາຍລະອຽດລູກຄ້າ
             </h4>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {/* Customer */}
               <div>
                 <p className="text-sm font-medium text-gray-700 mb-2">
-                  Customer
+                  ລູກຄ້າ
                 </p>
                 <div className="space-y-1">
                   <p className="text-sm text-gray-900">{customerName}</p>
@@ -341,7 +340,7 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
               {/* Contact */}
               <div>
                 <p className="text-sm font-medium text-gray-700 mb-2">
-                  Contact
+                  ຕິດຕໍ່
                 </p>
                 <div className="space-y-1">
                   {order.customer?.email && (
@@ -359,7 +358,7 @@ const OrderDetailsPanel: React.FC<OrderDetailsPanelProps> = ({
               {/* Shipping */}
               <div>
                 <p className="text-sm font-medium text-gray-700 mb-2">
-                  Shipping address
+                  ທີ່ຢູ່ຈັດສົ່ງ
                 </p>
                 <p className="text-sm text-gray-900 flex items-start gap-2">
                   <LocationIcon

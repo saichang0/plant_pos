@@ -1,112 +1,114 @@
 "use client";
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   SearchIcon,
   ArrowDownIcon,
   ArrowUpIcon,
-} from '@/src/components/icons/page';
-import { useProducts, useCategories, Product } from '@/src/features/stock/useProduct';
-import { useSuppliers } from '@/src/features/supplier/useSupplier';
-import { useCreatePurchaseOrder } from '@/src/features/import/useImport';
-import { useToast } from '@/src/components/toast';
+} from "@/src/components/icons/page";
+import {
+  useProducts,
+  useCategories,
+  Product,
+} from "@/src/features/stock/useProduct";
+import { useSuppliers } from "@/src/features/supplier/useSupplier";
+import { useCreatePurchaseOrder } from "@/src/features/import/useImport";
+import { useToast } from "@/src/components/toast";
+import { FaPlus, FaMinus, FaTimes } from "react-icons/fa";
+
+const formatMoney = (n: number | string | undefined) =>
+  Number(n || 0).toLocaleString("en-US");
 
 export default function PurchasePage() {
-  const { products, loading, error, refetch } = useProducts();
+  const router = useRouter();
+  const { products, loading, error } = useProducts();
   const { categories } = useCategories();
   const { suppliers } = useSuppliers();
   const { submitting, createPurchaseOrder } = useCreatePurchaseOrder();
   const { showToast } = useToast();
 
-  const [searchQuery, setSearchQuery] = useState('');
-
-  const [selectedCategory, setSelectedCategory] = useState('ໝວດໝູ່ທັງໝົດ');
-  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
-  const categoryRef = useRef<HTMLDivElement>(null);
-
-  const [selectedStatus, setSelectedStatus] = useState('ສະຖານະທັງໝົດ');
-  const [showStatusDropdown, setShowStatusDropdown] = useState(false);
-  const statusRef = useRef<HTMLDivElement>(null);
-  const statusOptions = ['ສະຖານະທັງໝົດ', 'Active', 'Inactive'];
-
-  // Selected products with quantities
-  const [selectedItems, setSelectedItems] = useState<Map<string, number>>(new Map());
-
-  // Supplier selection for purchase order
-  const [selectedSupplierId, setSelectedSupplierId] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedItems, setSelectedItems] = useState<Map<string, number>>(
+    new Map(),
+  );
+  const [selectedSupplierId, setSelectedSupplierId] = useState("");
   const [showSupplierDropdown, setShowSupplierDropdown] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [mobileCartOpen, setMobileCartOpen] = useState(false);
   const supplierRef = useRef<HTMLDivElement>(null);
 
-  // Confirm modal
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-
-  // Close dropdowns
   useEffect(() => {
-    const handleClickOutside = (e: MouseEvent) => {
-      if (categoryRef.current && !categoryRef.current.contains(e.target as Node)) setShowCategoryDropdown(false);
-      if (statusRef.current && !statusRef.current.contains(e.target as Node)) setShowStatusDropdown(false);
-      if (supplierRef.current && !supplierRef.current.contains(e.target as Node)) setShowSupplierDropdown(false);
+    const onClick = (e: MouseEvent) => {
+      if (supplierRef.current && !supplierRef.current.contains(e.target as Node))
+        setShowSupplierDropdown(false);
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
   }, []);
 
-  const getCategoryName = (categoryId: string) => {
-    return categories.find((c) => c.id === categoryId)?.name || "-";
-  };
-
-  const formatPrice = (price: number) => {
-    return price.toLocaleString("en-US");
-  };
-
-  // Filter
-  const filtered = products.filter(product => {
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      if (!product.name.toLowerCase().includes(q)) return false;
-    }
-    if (selectedCategory !== 'ໝວດໝູ່ທັງໝົດ') {
-      const cat = categories.find((c) => c.name === selectedCategory);
-      if (cat && product.categoryId !== cat.id) return false;
-    }
-    if (selectedStatus === 'Active' && !product.isActive) return false;
-    if (selectedStatus === 'Inactive' && product.isActive) return false;
-    return true;
-  });
-
-  const handleRowClick = (product: Product) => {
-    setSelectedItems(prev => {
-      const newMap = new Map(prev);
-      if (newMap.has(product.id)) {
-        newMap.delete(product.id);
-      } else {
-        newMap.set(product.id, 1);
+  const filtered = useMemo(() => {
+    return products.filter((p) => {
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        if (!p.name.toLowerCase().includes(q)) return false;
       }
-      return newMap;
+      if (selectedCategory !== "all" && p.categoryId !== selectedCategory)
+        return false;
+      return true;
+    });
+  }, [products, searchQuery, selectedCategory]);
+
+  const toggleSelect = (p: Product) => {
+    setSelectedItems((prev) => {
+      const next = new Map(prev);
+      if (next.has(p.id)) next.delete(p.id);
+      else next.set(p.id, 1);
+      return next;
     });
   };
 
-  const handleQuantityChange = (productId: string, quantity: number) => {
-    if (quantity < 1) return;
-    setSelectedItems(prev => {
-      const newMap = new Map(prev);
-      newMap.set(productId, quantity);
-      return newMap;
+  const changeQty = (id: string, delta: number) => {
+    setSelectedItems((prev) => {
+      const next = new Map(prev);
+      const cur = next.get(id) || 1;
+      const nv = Math.max(1, cur + delta);
+      next.set(id, nv);
+      return next;
     });
   };
 
-  const handleSearch = () => {
-    refetch({
-      keyword: searchQuery || undefined,
+  const setQty = (id: string, v: number) => {
+    if (v < 1) return;
+    setSelectedItems((prev) => {
+      const next = new Map(prev);
+      next.set(id, v);
+      return next;
     });
   };
 
-  const selectedSupplierName = suppliers.find(s => s.id === selectedSupplierId)?.name || 'ເລືອກຜູ້ສະໜອງ';
+  const removeItem = (id: string) => {
+    setSelectedItems((prev) => {
+      const next = new Map(prev);
+      next.delete(id);
+      return next;
+    });
+  };
 
-  // Calculate total
-  const totalPrice = Array.from(selectedItems.entries()).reduce((sum, [productId, qty]) => {
-    const product = products.find(p => p.id === productId);
-    return sum + (product ? product.costPrice * qty : 0);
-  }, 0);
+  const totalPrice = Array.from(selectedItems.entries()).reduce(
+    (sum, [id, qty]) => {
+      const p = products.find((x) => x.id === id);
+      return sum + (p ? p.costPrice * qty : 0);
+    },
+    0,
+  );
+
+  const totalQty = Array.from(selectedItems.values()).reduce(
+    (s, q) => s + q,
+    0,
+  );
+
+  const selectedSupplier = suppliers.find((s) => s.id === selectedSupplierId);
 
   const handlePurchaseClick = () => {
     if (selectedItems.size === 0) {
@@ -122,303 +124,575 @@ export default function PurchasePage() {
 
   const handleConfirmPurchase = async () => {
     const items = Array.from(selectedItems.entries()).map(([productId, quantity]) => {
-      const product = products.find(p => p.id === productId);
-      return {
-        productId,
-        quantity,
-        costPrice: product?.costPrice || 0,
-      };
+      const p = products.find((x) => x.id === productId);
+      return { productId, quantity, costPrice: p?.costPrice || 0 };
     });
-
     const result = await createPurchaseOrder(selectedSupplierId, items);
     setShowConfirmModal(false);
-
     if (result.success) {
       showToast("ສ້າງໃບສັ່ງຊື້ສຳເລັດແລ້ວ", "success");
       setSelectedItems(new Map());
-      setSelectedSupplierId('');
+      setSelectedSupplierId("");
+      router.push("/dashboard/import");
     } else {
       showToast(result.message, "error");
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      {/* Filters */}
-      <section className="bg-white rounded-2xl border border-gray-200 shadow-sm mb-6 p-4">
-        <div className="flex items-center gap-3">
-          {/* Search */}
-          <div className="flex-1 relative">
-            <SearchIcon size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              placeholder="ຄົ້ນຫາຊື່ສິນຄ້າ..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/40">
+      <div className="max-w-7xl mx-auto p-4 lg:p-6 pb-28 lg:pb-6 space-y-4">
+        {/* Header */}
+        <header className="flex items-center gap-3">
+          <button
+            onClick={() => router.back()}
+            className="w-10 h-10 rounded-xl bg-white border border-gray-200 shadow-sm text-gray-600 hover:bg-gray-50 hover:text-emerald-600 flex items-center justify-center transition"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
+          <div className="flex-1">
+            <h1 className="text-xl lg:text-2xl font-bold text-gray-900">
+              ສ້າງໃບສັ່ງຊື້
+            </h1>
+            <p className="text-xs text-gray-500">
+              ເລືອກສິນຄ້າ ແລະ ກຳນົດຜູ້ສະໜອງ
+            </p>
           </div>
+        </header>
 
-          {/* Category Dropdown */}
-          <div className="relative" ref={categoryRef}>
-            <button
-              onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <span className="text-sm text-gray-700">{selectedCategory}</span>
-              {showCategoryDropdown ? <ArrowUpIcon size={16} className="text-gray-500" /> : <ArrowDownIcon size={16} className="text-gray-500" />}
-            </button>
-            {showCategoryDropdown && (
-              <div className="absolute top-full mt-2 right-0 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+        {/* Grid layout — products left, cart right */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-4">
+          {/* LEFT — products */}
+          <section className="flex flex-col gap-3 min-w-0">
+            {/* Search + supplier */}
+            <div className="rounded-2xl bg-white border border-gray-200 shadow-sm p-3 flex flex-col sm:flex-row sm:items-center gap-2">
+              <div className="relative flex-1">
+                <SearchIcon
+                  size={18}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                />
+                <input
+                  type="text"
+                  placeholder="ຄົ້ນຫາສິນຄ້າ..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-9 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:border-emerald-500"
+                />
+                {searchQuery && (
+                  <button
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full text-gray-400 hover:text-rose-600 hover:bg-rose-50"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+
+              <div className="relative" ref={supplierRef}>
                 <button
-                  onClick={() => { setSelectedCategory('ໝວດໝູ່ທັງໝົດ'); setShowCategoryDropdown(false); }}
-                  className={`w-full text-left px-4 py-2.5 text-sm hover:bg-green-50 rounded-t-lg ${selectedCategory === 'ໝວດໝູ່ທັງໝົດ' ? 'text-green-700 font-medium bg-green-50' : 'text-gray-700'}`}
+                  onClick={() => setShowSupplierDropdown((v) => !v)}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 rounded-xl hover:bg-gray-50 text-sm transition w-full sm:w-auto"
                 >
-                  ໝວດໝູ່ທັງໝົດ
+                  <span className="text-gray-700 truncate max-w-[180px]">
+                    {selectedSupplier ? `🏭 ${selectedSupplier.name}` : "ເລືອກຜູ້ສະໜອງ"}
+                  </span>
+                  {showSupplierDropdown ? (
+                    <ArrowUpIcon size={16} className="text-gray-500 ml-auto" />
+                  ) : (
+                    <ArrowDownIcon size={16} className="text-gray-500 ml-auto" />
+                  )}
                 </button>
-                {categories.map(cat => (
-                  <button
+                {showSupplierDropdown && (
+                  <div className="absolute top-full mt-2 right-0 w-60 bg-white border border-gray-200 rounded-xl shadow-xl z-20 overflow-hidden max-h-64 overflow-y-auto">
+                    {suppliers.length === 0 && (
+                      <p className="text-sm text-gray-400 text-center py-4">
+                        ບໍ່ມີຜູ້ສະໜອງ
+                      </p>
+                    )}
+                    {suppliers.map((s) => (
+                      <button
+                        key={s.id}
+                        onClick={() => {
+                          setSelectedSupplierId(s.id);
+                          setShowSupplierDropdown(false);
+                        }}
+                        className={`w-full text-left px-4 py-2.5 text-sm hover:bg-emerald-50 ${
+                          selectedSupplierId === s.id
+                            ? "text-emerald-700 font-medium bg-emerald-50"
+                            : "text-gray-700"
+                        }`}
+                      >
+                        🏭 {s.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Category pills */}
+            <div className="flex flex-wrap gap-2">
+              <CategoryPill
+                active={selectedCategory === "all"}
+                onClick={() => setSelectedCategory("all")}
+                label="ທັງໝົດ"
+                count={products.length}
+              />
+              {categories.map((cat) => {
+                const c = products.filter((p) => p.categoryId === cat.id).length;
+                return (
+                  <CategoryPill
                     key={cat.id}
-                    onClick={() => { setSelectedCategory(cat.name); setShowCategoryDropdown(false); }}
-                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-green-50 last:rounded-b-lg ${selectedCategory === cat.name ? 'text-green-700 font-medium bg-green-50' : 'text-gray-700'}`}
-                  >
-                    {cat.name}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+                    active={selectedCategory === cat.id}
+                    onClick={() => setSelectedCategory(cat.id)}
+                    label={cat.name}
+                    count={c}
+                  />
+                );
+              })}
+            </div>
 
-          {/* Status Dropdown */}
-          <div className="relative" ref={statusRef}>
-            <button
-              onClick={() => setShowStatusDropdown(!showStatusDropdown)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <span className="text-sm text-gray-700">{selectedStatus}</span>
-              {showStatusDropdown ? <ArrowUpIcon size={16} className="text-gray-500" /> : <ArrowDownIcon size={16} className="text-gray-500" />}
-            </button>
-            {showStatusDropdown && (
-              <div className="absolute top-full mt-2 right-0 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-                {statusOptions.map(s => (
-                  <button
-                    key={s}
-                    onClick={() => { setSelectedStatus(s); setShowStatusDropdown(false); }}
-                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-green-50 first:rounded-t-lg last:rounded-b-lg ${selectedStatus === s ? 'text-green-700 font-medium bg-green-50' : 'text-gray-700'}`}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Supplier Dropdown */}
-          <div className="relative" ref={supplierRef}>
-            <button
-              onClick={() => setShowSupplierDropdown(!showSupplierDropdown)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-            >
-              <span className="text-sm text-gray-700">{selectedSupplierName}</span>
-              {showSupplierDropdown ? <ArrowUpIcon size={16} className="text-gray-500" /> : <ArrowDownIcon size={16} className="text-gray-500" />}
-            </button>
-            {showSupplierDropdown && (
-              <div className="absolute top-full mt-2 right-0 w-52 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
-                {suppliers.map(s => (
-                  <button
-                    key={s.id}
-                    onClick={() => { setSelectedSupplierId(s.id); setShowSupplierDropdown(false); }}
-                    className={`w-full text-left px-4 py-2.5 text-sm hover:bg-green-50 first:rounded-t-lg last:rounded-b-lg ${selectedSupplierId === s.id ? 'text-green-700 font-medium bg-green-50' : 'text-gray-700'}`}
-                  >
-                    {s.name}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Purchase button */}
-          <button
-            onClick={handlePurchaseClick}
-            className={`flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg transition-colors ${
-              selectedItems.size > 0 ? 'bg-green-600' : 'bg-slate-600'
-            }`}
-          >
-            <span className="text-sm text-white font-bold">ສັ່ງຊື້({selectedItems.size})</span>
-          </button>
-
-          {/* Cancel */}
-          <button
-            onClick={() => { setSelectedItems(new Map()); setSelectedSupplierId(''); }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-red-600 border border-gray-300 rounded-lg transition-colors"
-          >
-            <span className="text-sm text-white font-bold">ຍົກເລີກ</span>
-          </button>
-        </div>
-      </section>
-
-      {/* Table */}
-      <section className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-gray-500">Loading...</div>
-          </div>
-        ) : error ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-red-500">{error}</div>
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-gray-500">ບໍ່ມີຂໍ້ມູນ</div>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead className="bg-emerald-900 border-b border-gray-200">
-                <tr>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-100">#</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-100">ຮູບ</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-100">ຊື່ສິນຄ້າ</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-100">ໝວດໝູ່</th>
-                  <th className="text-left px-6 py-4 text-sm font-semibold text-gray-100">ຂະໜາດ</th>
-                  <th className="text-right px-6 py-4 text-sm font-semibold text-gray-100">ລາຄາຕົ້ນທຶນ</th>
-                  <th className="text-right px-6 py-4 text-sm font-semibold text-gray-100">ລາຄາຂາຍ</th>
-                  <th className="text-center px-6 py-4 text-sm font-semibold text-gray-100">ຈຳນວນສັ່ງ</th>
-                  <th className="text-center px-6 py-4 text-sm font-semibold text-gray-100">ສະຖານະ</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {filtered.map((product, index) => {
-                  const isSelected = selectedItems.has(product.id);
-                  const qty = selectedItems.get(product.id) || 0;
+            {/* Products list */}
+            <div className="space-y-2">
+              {loading ? (
+                <Empty>
+                  <Spinner />
+                  <p className="text-sm mt-3 text-gray-500">ກຳລັງໂຫຼດ…</p>
+                </Empty>
+              ) : error ? (
+                <Empty tone="rose">
+                  <div className="text-3xl">⚠️</div>
+                  <div className="text-sm">{error}</div>
+                </Empty>
+              ) : filtered.length === 0 ? (
+                <Empty>
+                  <div className="text-6xl">📦</div>
+                  <div className="text-sm text-gray-400">ບໍ່ມີສິນຄ້າ</div>
+                </Empty>
+              ) : (
+                filtered.map((p) => {
+                  const isSelected = selectedItems.has(p.id);
+                  const qty = selectedItems.get(p.id) || 0;
                   return (
-                    <tr
-                      key={product.id}
-                      onClick={() => handleRowClick(product)}
-                      className={`cursor-pointer transition-colors ${
-                        isSelected ? 'bg-green-100 hover:bg-green-200' : 'hover:bg-gray-50'
+                    <article
+                      key={p.id}
+                      onClick={() => !isSelected && toggleSelect(p)}
+                      className={`group relative overflow-hidden rounded-2xl border shadow-sm transition-all ${
+                        isSelected
+                          ? "bg-emerald-50/60 border-emerald-300 ring-1 ring-emerald-200"
+                          : "bg-white border-gray-100 hover:border-emerald-200 hover:shadow-md cursor-pointer"
                       }`}
                     >
-                      <td className="px-6 py-4 text-sm text-gray-500">{index + 1}</td>
-                      <td className="px-6 py-4">
-                        {product.imageUrl ? (
+                      <div
+                        className={`absolute left-0 top-0 bottom-0 w-1.5 ${
+                          isSelected ? "bg-emerald-500" : "bg-gray-200"
+                        }`}
+                      />
+                      <div className="pl-5 pr-4 py-3 flex items-center gap-3">
+                        {p.imageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
                           <img
-                            src={product.imageUrl}
-                            alt={product.name}
-                            className="w-10 h-10 rounded-lg object-cover border border-gray-200"
+                            src={p.imageUrl}
+                            alt={p.name}
+                            className="shrink-0 w-12 h-12 rounded-xl object-cover bg-gray-50 ring-1 ring-white"
                           />
                         ) : (
-                          <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
-                            No img
+                          <div className="shrink-0 w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 flex items-center justify-center text-xl ring-1 ring-white">
+                            🌱
                           </div>
                         )}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-900">{product.name}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{getCategoryName(product.categoryId)}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">{product.size || "-"}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600 text-right">{formatPrice(product.costPrice)}</td>
-                      <td className="px-6 py-4 text-sm font-medium text-gray-900 text-right">{formatPrice(product.salePrice)}</td>
-                      <td className="px-6 py-4 text-center">
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900 truncate">
+                            {p.name}
+                          </p>
+                          <div className="mt-0.5 flex items-center gap-2 text-xs text-gray-500 flex-wrap">
+                            {p.size && <span>📏 {p.size}</span>}
+                            <span>ຕົ້ນທຶນ ₭ {formatMoney(p.costPrice)}</span>
+                          </div>
+                        </div>
+
                         {isSelected ? (
-                          <input
-                            type="number"
-                            min={1}
-                            value={qty}
+                          <div
+                            className="flex items-center gap-1 shrink-0"
                             onClick={(e) => e.stopPropagation()}
-                            onChange={(e) => handleQuantityChange(product.id, parseInt(e.target.value) || 1)}
-                            className="w-20 px-2 py-1.5 text-sm text-center border border-green-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white"
-                          />
+                          >
+                            <button
+                              onClick={() => changeQty(p.id, -1)}
+                              className="w-8 h-8 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-100 flex items-center justify-center"
+                            >
+                              <FaMinus className="w-2.5 h-2.5" />
+                            </button>
+                            <input
+                              type="number"
+                              min={1}
+                              value={qty}
+                              onChange={(e) =>
+                                setQty(p.id, parseInt(e.target.value) || 1)
+                              }
+                              className="w-14 px-2 py-1.5 text-sm text-center border border-emerald-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500/40 bg-white"
+                            />
+                            <button
+                              onClick={() => changeQty(p.id, 1)}
+                              className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 hover:bg-emerald-100 flex items-center justify-center"
+                            >
+                              <FaPlus className="w-2.5 h-2.5" />
+                            </button>
+                            <button
+                              onClick={() => removeItem(p.id)}
+                              className="w-8 h-8 rounded-lg text-rose-500 hover:text-white hover:bg-rose-500 flex items-center justify-center ml-1"
+                            >
+                              <FaTimes className="w-3 h-3" />
+                            </button>
+                          </div>
                         ) : (
-                          <span className="text-sm text-gray-400">-</span>
+                          <span className="shrink-0 inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-semibold text-emerald-700 bg-emerald-50 group-hover:bg-emerald-600 group-hover:text-white transition">
+                            + ເລືອກ
+                          </span>
                         )}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span
-                          className={`inline-flex px-2.5 py-1 text-xs font-medium rounded-full ${
-                            product.isActive
-                              ? "bg-green-100 text-green-700 border border-green-200"
-                              : "bg-red-100 text-red-700 border border-red-200"
-                          }`}
-                        >
-                          {product.isActive ? "Active" : "Inactive"}
-                        </span>
-                      </td>
-                    </tr>
+                      </div>
+                    </article>
                   );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
+                })
+              )}
+            </div>
+          </section>
 
-        {/* Footer */}
-        <div className="px-6 py-4 border-t border-gray-200">
-          <p className="text-sm text-gray-500">ທັງໝົດ {filtered.length} ສິນຄ້າ</p>
+          {/* RIGHT — cart (desktop) */}
+          <aside className="hidden lg:block sticky top-4 self-start">
+            <CartPanel
+              selectedItems={selectedItems}
+              products={products}
+              totalPrice={totalPrice}
+              totalQty={totalQty}
+              supplier={selectedSupplier}
+              onClear={() => {
+                setSelectedItems(new Map());
+                setSelectedSupplierId("");
+              }}
+              onSubmit={handlePurchaseClick}
+              onRemove={removeItem}
+              onChangeQty={changeQty}
+            />
+          </aside>
         </div>
-      </section>
+      </div>
 
-      {/* Confirm Purchase Modal */}
+      {/* Mobile bottom bar */}
+      {selectedItems.size > 0 && (
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-white via-white to-white/0">
+          <button
+            onClick={() => setMobileCartOpen(true)}
+            className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white shadow-lg shadow-emerald-500/30"
+          >
+            <span className="flex items-center gap-3">
+              <span className="relative">
+                📋
+                <span className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-orange-500 text-[10px] font-bold flex items-center justify-center">
+                  {selectedItems.size}
+                </span>
+              </span>
+              <span className="text-sm font-semibold">ກວດສອບໃບສັ່ງຊື້</span>
+            </span>
+            <span className="text-base font-bold">
+              ₭ {formatMoney(totalPrice)}
+            </span>
+          </button>
+        </div>
+      )}
+
+      {/* Mobile cart drawer */}
+      {mobileCartOpen && (
+        <div className="lg:hidden fixed inset-0 z-50">
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setMobileCartOpen(false)}
+          />
+          <div className="absolute bottom-0 left-0 right-0 bg-white rounded-t-3xl max-h-[92vh] flex flex-col shadow-2xl">
+            <div className="flex items-center justify-center pt-2 pb-1">
+              <div className="w-12 h-1 rounded-full bg-gray-300" />
+            </div>
+            <div className="flex-1 overflow-hidden p-4">
+              <CartPanel
+                selectedItems={selectedItems}
+                products={products}
+                totalPrice={totalPrice}
+                totalQty={totalQty}
+                supplier={selectedSupplier}
+                onClear={() => {
+                  setSelectedItems(new Map());
+                  setSelectedSupplierId("");
+                  setMobileCartOpen(false);
+                }}
+                onSubmit={() => {
+                  setMobileCartOpen(false);
+                  handlePurchaseClick();
+                }}
+                onRemove={removeItem}
+                onChangeQty={changeQty}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm modal */}
       {showConfirmModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 mx-4">
-            <h2 className="text-xl font-bold text-slate-800 mb-4">ຢືນຢັນການສັ່ງຊື້</h2>
-
-            <div className="mb-4">
-              <p className="text-sm text-gray-500 mb-1">ຜູ້ສະໜອງ</p>
-              <p className="text-sm font-medium text-gray-900">{selectedSupplierName}</p>
+        <div
+          className="fixed inset-0 z-[60] bg-black/40 flex items-end sm:items-center justify-center p-4"
+          onClick={() => setShowConfirmModal(false)}
+        >
+          <div
+            className="bg-white rounded-2xl w-full max-w-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="px-6 py-4 bg-gradient-to-r from-emerald-700 to-emerald-800 text-white rounded-t-2xl">
+              <p className="text-xs opacity-80">ຢືນຢັນການສັ່ງຊື້</p>
+              <p className="text-lg font-bold">
+                {selectedSupplier?.name || "—"}
+              </p>
             </div>
-
-            <div className="border border-gray-200 rounded-lg overflow-hidden mb-4">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="text-left px-4 py-2 text-xs font-semibold text-gray-600">ສິນຄ້າ</th>
-                    <th className="text-center px-4 py-2 text-xs font-semibold text-gray-600">ຈຳນວນ</th>
-                    <th className="text-right px-4 py-2 text-xs font-semibold text-gray-600">ລາຄາ</th>
-                    <th className="text-right px-4 py-2 text-xs font-semibold text-gray-600">ລວມ</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {Array.from(selectedItems.entries()).map(([productId, qty]) => {
-                    const product = products.find(p => p.id === productId);
-                    if (!product) return null;
-                    return (
-                      <tr key={productId}>
-                        <td className="px-4 py-2 text-sm text-gray-900">{product.name}</td>
-                        <td className="px-4 py-2 text-sm text-gray-600 text-center">{qty}</td>
-                        <td className="px-4 py-2 text-sm text-gray-600 text-right">{formatPrice(product.costPrice)}</td>
-                        <td className="px-4 py-2 text-sm font-medium text-gray-900 text-right">{formatPrice(product.costPrice * qty)}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+            <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
+              {Array.from(selectedItems.entries()).map(([productId, qty]) => {
+                const p = products.find((x) => x.id === productId);
+                if (!p) return null;
+                return (
+                  <div
+                    key={productId}
+                    className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50/50"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100 flex items-center justify-center">
+                      🌱
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900 truncate">
+                        {p.name}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        x{qty} @ ₭ {formatMoney(p.costPrice)}
+                      </p>
+                    </div>
+                    <span className="font-bold text-emerald-700">
+                      ₭ {formatMoney(p.costPrice * qty)}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
-
-            <div className="flex justify-between items-center mb-6 px-1">
-              <span className="text-sm font-semibold text-gray-700">ລວມທັງໝົດ</span>
-              <span className="text-lg font-bold text-emerald-900">₭ {formatPrice(totalPrice)}</span>
-            </div>
-
-            <div className="flex items-center justify-end gap-3">
-              <button
-                onClick={() => setShowConfirmModal(false)}
-                className="px-5 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                ຍົກເລີກ
-              </button>
-              <button
-                onClick={handleConfirmPurchase}
-                disabled={submitting}
-                className="px-5 py-2.5 text-sm font-medium text-white bg-emerald-900 rounded-lg hover:bg-emerald-950 transition-colors disabled:opacity-50"
-              >
-                {submitting ? "ກຳລັງບັນທຶກ..." : "ຢືນຢັນ"}
-              </button>
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+              <div className="flex justify-between items-center mb-3">
+                <span className="text-sm font-semibold text-gray-700">
+                  ລວມທັງໝົດ ({selectedItems.size} ລາຍການ)
+                </span>
+                <span className="text-xl font-bold text-emerald-700">
+                  ₭ {formatMoney(totalPrice)}
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowConfirmModal(false)}
+                  className="flex-1 py-2.5 rounded-xl bg-gray-100 text-sm text-gray-700 hover:bg-gray-200"
+                >
+                  ຍົກເລີກ
+                </button>
+                <button
+                  onClick={handleConfirmPurchase}
+                  disabled={submitting}
+                  className="flex-1 py-2.5 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-xl text-sm font-semibold hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-50"
+                >
+                  {submitting ? "ກຳລັງບັນທຶກ…" : "ຢືນຢັນ"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────
+
+function CartPanel({
+  selectedItems,
+  products,
+  totalPrice,
+  totalQty,
+  supplier,
+  onClear,
+  onSubmit,
+  onRemove,
+  onChangeQty,
+}: {
+  selectedItems: Map<string, number>;
+  products: Product[];
+  totalPrice: number;
+  totalQty: number;
+  supplier?: { id: string; name: string };
+  onClear: () => void;
+  onSubmit: () => void;
+  onRemove: (id: string) => void;
+  onChangeQty: (id: string, delta: number) => void;
+}) {
+  return (
+    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden flex flex-col max-h-[calc(100vh-120px)]">
+      <div className="px-4 py-3 bg-gradient-to-r from-emerald-700 to-emerald-800 text-white">
+        <p className="text-xs opacity-80">ໃບສັ່ງຊື້ໃໝ່</p>
+        <p className="text-base font-bold mt-0.5">
+          {supplier ? `🏭 ${supplier.name}` : "ຍັງບໍ່ໄດ້ເລືອກຜູ້ສະໜອງ"}
+        </p>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        {selectedItems.size === 0 ? (
+          <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+            <div className="text-5xl mb-2">📋</div>
+            <p className="text-sm">ຍັງບໍ່ມີລາຍການ</p>
+            <p className="text-xs mt-1">ກົດເລືອກສິນຄ້າ</p>
+          </div>
+        ) : (
+          Array.from(selectedItems.entries()).map(([id, qty]) => {
+            const p = products.find((x) => x.id === id);
+            if (!p) return null;
+            return (
+              <div
+                key={id}
+                className="flex items-center gap-2 p-2 rounded-xl border border-gray-100"
+              >
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-50 to-emerald-100 flex items-center justify-center text-lg shrink-0">
+                  🌱
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {p.name}
+                  </p>
+                  <p className="text-[11px] text-gray-500">
+                    ₭ {formatMoney(p.costPrice)} × {qty}
+                  </p>
+                </div>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => onChangeQty(id, -1)}
+                    className="w-6 h-6 rounded-md bg-gray-100 text-gray-600 hover:bg-gray-200 text-xs"
+                  >
+                    −
+                  </button>
+                  <span className="w-6 text-center text-sm font-bold">{qty}</span>
+                  <button
+                    onClick={() => onChangeQty(id, 1)}
+                    className="w-6 h-6 rounded-md bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-xs"
+                  >
+                    +
+                  </button>
+                  <button
+                    onClick={() => onRemove(id)}
+                    className="ml-1 w-6 h-6 rounded-md text-rose-500 hover:bg-rose-50"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      <div className="border-t border-gray-200 p-3 bg-gradient-to-br from-gray-50 to-emerald-50/30">
+        <div className="flex justify-between text-sm mb-2">
+          <span className="text-gray-600">ລາຍການ</span>
+          <span className="font-semibold">{selectedItems.size}</span>
+        </div>
+        <div className="flex justify-between text-sm mb-2">
+          <span className="text-gray-600">ຫົວໜ່ວຍ</span>
+          <span className="font-semibold">{totalQty}</span>
+        </div>
+        <div className="flex justify-between items-end pt-2 border-t border-gray-200">
+          <span className="text-sm font-medium text-gray-700">ລວມຍອດ</span>
+          <span className="text-2xl font-bold text-emerald-700">
+            ₭ {formatMoney(totalPrice)}
+          </span>
+        </div>
+        <div className="mt-3 flex gap-2">
+          {selectedItems.size > 0 && (
+            <button
+              onClick={onClear}
+              className="px-3 py-3 text-sm font-medium text-rose-600 bg-rose-50 rounded-xl hover:bg-rose-100"
+            >
+              ✕
+            </button>
+          )}
+          <button
+            onClick={onSubmit}
+            disabled={selectedItems.size === 0}
+            className="flex-1 py-3 bg-gradient-to-r from-emerald-600 to-emerald-700 text-white rounded-xl font-semibold hover:from-emerald-700 hover:to-emerald-800 disabled:opacity-40 text-sm shadow-sm"
+          >
+            ສ້າງໃບສັ່ງຊື້
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CategoryPill({
+  active,
+  onClick,
+  label,
+  count,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  count: number;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`shrink-0 inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium transition ${
+        active
+          ? "bg-emerald-600 text-white shadow-sm"
+          : "bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
+      }`}
+    >
+      {label}
+      <span
+        className={`px-1.5 py-0.5 rounded-full text-[10px] ${
+          active ? "bg-white/20" : "bg-gray-100 text-gray-600"
+        }`}
+      >
+        {count}
+      </span>
+    </button>
+  );
+}
+
+function Empty({
+  children,
+  tone = "gray",
+}: {
+  children: React.ReactNode;
+  tone?: "gray" | "rose";
+}) {
+  return (
+    <div
+      className={`bg-white rounded-2xl shadow-sm border py-16 text-center ${
+        tone === "rose" ? "border-rose-100" : "border-gray-100"
+      }`}
+    >
+      <div
+        className={`flex flex-col items-center gap-2 ${
+          tone === "rose" ? "text-rose-600" : "text-gray-400"
+        }`}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function Spinner() {
+  return (
+    <div className="w-10 h-10 rounded-full border-4 border-emerald-200 border-t-emerald-600 animate-spin" />
   );
 }

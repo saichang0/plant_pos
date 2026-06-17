@@ -48,6 +48,8 @@ export interface SaleDelivery {
 
 export interface SaleRecord {
   id: string;
+  code?: string;
+  source?: 'PLENT_WEB' | 'PLENT_APP';
   customerId?: string;
   userId: string;
   saleDate: string;

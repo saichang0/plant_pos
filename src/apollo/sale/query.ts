@@ -9,6 +9,8 @@ query GetSales($status: String, $limit: Int, $offset: Int) {
     total
     sales {
       id
+      code
+      source
       customerId
       userId
       saleDate
@@ -91,6 +93,8 @@ query GetSale($id: ID!) {
     tap
     sale {
       id
+      code
+      source
       customerId
       userId
       saleDate

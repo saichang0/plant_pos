@@ -8,6 +8,8 @@ mutation CreateFullSale($input: CreateFullSaleInput!) {
     tap
     sale {
       id
+      code
+      source
       totalAmount
       taxAmount
       discountAmount
