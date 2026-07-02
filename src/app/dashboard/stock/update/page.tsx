@@ -1,9 +1,10 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import PlantForm from "@/src/components/plantForm";
 
-export default function UpdateStockPage() {
+function UpdateStockContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const productId = searchParams.get("id");
@@ -35,5 +36,13 @@ export default function UpdateStockPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function UpdateStockPage() {
+  return (
+    <Suspense fallback={null}>
+      <UpdateStockContent />
+    </Suspense>
   );
 }
