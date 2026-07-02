@@ -11,8 +11,9 @@ import {
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/src/components/toast';
 import { useCreateProduct, useCategories, useProduct, useUpdateProduct } from '@/src/features/stock/useProduct';
-import { useUnitList } from '@/src/features/unit/useUnit';
+import { useUnitList, useCreateUnit } from '@/src/features/unit/useUnit';
 import type { Unit } from '@/src/features/unit/useUnit';
+import { useCreateCategory } from '@/src/features/category/useCategory';
 import { Category } from "../types/auth";
 
 interface PlantFormProps {
@@ -26,8 +27,10 @@ export default function PlantForm({ productId }: PlantFormProps) {
   const { formData, setFormData, submitting, createProduct, resetForm } = useCreateProduct();
   const { submitting: updating, updateProduct } = useUpdateProduct();
   const { product: existingProduct, loading: productLoading } = useProduct(productId || null);
-  const { categories, loading: categoriesLoading, error: categoriesError } = useCategories();
-  const { units, loading: unitsLoading, error: unitsError } = useUnitList();
+  const { categories, loading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useCategories();
+  const { units, loading: unitsLoading, error: unitsError, refetch: refetchUnits } = useUnitList();
+  const { createCategory, submitting: creatingCategory } = useCreateCategory();
+  const { createUnit, submitting: creatingUnit } = useCreateUnit();
 
   // Pre-fill form when editing
   useEffect(() => {
@@ -66,7 +69,59 @@ export default function PlantForm({ productId }: PlantFormProps) {
   const sizeDropdownRef = React.useRef<HTMLDivElement>(null);
   const [unitDropdownOpen, setUnitDropdownOpen] = useState(false);
   const unitDropdownRef = React.useRef<HTMLDivElement>(null);
-  const sizeOptions = ['Small', 'Medium', 'Large'];
+
+  // Inline "add category" state
+  const [addingCategory, setAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+
+  // Sizes are free-text on the product; keep a local list the user can extend inline
+  const [sizeOptions, setSizeOptions] = useState<string[]>(['Small', 'Medium', 'Large']);
+  const [addingSize, setAddingSize] = useState(false);
+  const [newSizeName, setNewSizeName] = useState('');
+
+  const handleAddCategory = async () => {
+    const name = newCategoryName.trim();
+    if (!name) return;
+    const result = await createCategory(name);
+    if (result.success) {
+      showToast(result.message, 'success');
+      await refetchCategories();
+      setNewCategoryName('');
+      setAddingCategory(false);
+    } else {
+      showToast(result.message, 'error');
+    }
+  };
+
+  // Inline "add unit" state
+  const [addingUnit, setAddingUnit] = useState(false);
+  const [newUnitName, setNewUnitName] = useState('');
+
+  const handleAddUnit = async () => {
+    const name = newUnitName.trim();
+    if (!name) return;
+    const result = await createUnit(name);
+    if (result.success) {
+      showToast(result.message, 'success');
+      await refetchUnits();
+      setNewUnitName('');
+      setAddingUnit(false);
+    } else {
+      showToast(result.message, 'error');
+    }
+  };
+
+  const handleAddSize = () => {
+    const name = newSizeName.trim();
+    if (!name) return;
+    if (!sizeOptions.includes(name)) {
+      setSizeOptions(prev => [...prev, name]);
+    }
+    setFormData(prev => ({ ...prev, size: name }));
+    setNewSizeName('');
+    setAddingSize(false);
+    setSizeDropdownOpen(false);
+  };
 
   // Close dropdowns when clicking outside
   useEffect(() => {
@@ -180,20 +235,13 @@ export default function PlantForm({ productId }: PlantFormProps) {
 
   return (
     <div className="w-full">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-4xl font-bold text-slate-800">
-          {isEditMode ? 'ແກ້ໄຂສິນຄ້າ' : 'ເພີ່ມຕົ້ນໄມ້ໃໝ່'}
-        </h1>
-      </div>
-
       {/* Form Card */}
       <div className="bg-white/95 backdrop-blur-sm rounded-3xl shadow-2xl p-8">
         <form onSubmit={handleSubmit}>
           {/* Product Information Section */}
           <div className="mb-8">
             <h2 className="text-lg font-semibold text-gray-800 mb-6 pb-2 border-b-2 border-dashed border-gray-300">
-              ຂໍ້ມູນພືດ
+              ຂໍ້ມູນສີນຄ້າ
             </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -236,7 +284,7 @@ export default function PlantForm({ productId }: PlantFormProps) {
               {/* Product Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  ຊື່ພືດ
+                  ຊື່ສີນຄ້າ
                 </label>
                 <input
                   type="text"
@@ -244,7 +292,7 @@ export default function PlantForm({ productId }: PlantFormProps) {
                   value={formData.name}
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
-                  placeholder="Enter product name"
+                  placeholder="ປ້ອນຊື່ສີນຄ້າ"
                 />
               </div>
 
@@ -280,31 +328,89 @@ export default function PlantForm({ productId }: PlantFormProps) {
                       )}
                     </button>
                     {categoryDropdownOpen && (
-                      <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-xl shadow-lg max-h-60 overflow-auto">
-                        <li
-                          onClick={() => {
-                            setFormData(prev => ({ ...prev, categoryId: '' }));
-                            setCategoryDropdownOpen(false);
-                          }}
-                          className="px-4 py-3 text-gray-500 hover:bg-green-50 cursor-pointer rounded-t-xl"
-                        >
-                          ເລືອກໝວດໝູ່
-                        </li>
-                        {categories.map((category: Category) => (
+                      <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-xl shadow-lg overflow-hidden">
+                        <ul className="max-h-60 overflow-auto">
                           <li
-                            key={category.id}
                             onClick={() => {
-                              setFormData(prev => ({ ...prev, categoryId: category.id }));
+                              setFormData(prev => ({ ...prev, categoryId: '' }));
                               setCategoryDropdownOpen(false);
                             }}
-                            className={`px-4 py-3 hover:bg-green-50 cursor-pointer last:rounded-b-xl ${
-                              formData.categoryId === category.id ? 'bg-green-100 text-green-800 font-medium' : 'text-gray-700'
-                            }`}
+                            className="px-4 py-3 text-gray-500 hover:bg-green-50 cursor-pointer rounded-t-xl"
                           >
-                            {category.name}
+                            ເລືອກໝວດໝູ່
                           </li>
-                        ))}
-                      </ul>
+                          {categories.length === 0 && (
+                            <li className="px-4 py-3 text-gray-400 text-sm">
+                              ຍັງບໍ່ມີໝວດໝູ່
+                            </li>
+                          )}
+                          {categories.map((category: Category) => (
+                            <li
+                              key={category.id}
+                              onClick={() => {
+                                setFormData(prev => ({ ...prev, categoryId: category.id }));
+                                setCategoryDropdownOpen(false);
+                              }}
+                              className={`px-4 py-3 hover:bg-green-50 cursor-pointer ${
+                                formData.categoryId === category.id ? 'bg-green-100 text-green-800 font-medium' : 'text-gray-700'
+                              }`}
+                            >
+                              {category.name}
+                            </li>
+                          ))}
+                        </ul>
+
+                        {/* Add-new-category footer */}
+                        <div className="border-t border-gray-200 bg-gray-50 p-2">
+                          {addingCategory ? (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                autoFocus
+                                value={newCategoryName}
+                                onChange={(e) => setNewCategoryName(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleAddCategory();
+                                  } else if (e.key === 'Escape') {
+                                    setAddingCategory(false);
+                                    setNewCategoryName('');
+                                  }
+                                }}
+                                placeholder="ຊື່ໝວດໝູ່ໃໝ່"
+                                className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-sm"
+                              />
+                              <button
+                                type="button"
+                                onClick={handleAddCategory}
+                                disabled={creatingCategory || !newCategoryName.trim()}
+                                className="px-3 py-2 bg-green-700 text-white text-sm rounded-lg hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                              >
+                                {creatingCategory ? '...' : 'ບັນທຶກ'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setAddingCategory(false);
+                                  setNewCategoryName('');
+                                }}
+                                className="px-2 py-2 text-gray-500 text-sm rounded-lg hover:bg-gray-200"
+                              >
+                                ຍົກເລີກ
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setAddingCategory(true)}
+                              className="w-full flex items-center justify-center gap-1 px-4 py-2 text-green-700 font-medium text-sm rounded-lg hover:bg-green-100"
+                            >
+                              + ເພີ່ມໝວດໝູ່
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     )}
                   </div>
                 )}
@@ -321,7 +427,7 @@ export default function PlantForm({ productId }: PlantFormProps) {
                   onChange={handleInputChange}
                   rows={3}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white resize-none"
-                  placeholder="Enter product description"
+                  placeholder="ປ້ອນຄຳອະທີບາຍສີນຄ້າ"
                 />
               </div>
 
@@ -346,22 +452,75 @@ export default function PlantForm({ productId }: PlantFormProps) {
                     )}
                   </button>
                   {sizeDropdownOpen && (
-                    <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-xl shadow-lg max-h-60 overflow-auto">
-                      {sizeOptions.map((size) => (
-                        <li
-                          key={size}
-                          onClick={() => {
-                            setFormData(prev => ({ ...prev, size }));
-                            setSizeDropdownOpen(false);
-                          }}
-                          className={`px-4 py-3 hover:bg-green-50 cursor-pointer first:rounded-t-xl last:rounded-b-xl ${
-                            formData.size === size ? 'bg-green-100 text-green-800 font-medium' : 'text-gray-700'
-                          }`}
-                        >
-                          {size}
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-xl shadow-lg overflow-hidden">
+                      <ul className="max-h-60 overflow-auto">
+                        {sizeOptions.map((size) => (
+                          <li
+                            key={size}
+                            onClick={() => {
+                              setFormData(prev => ({ ...prev, size }));
+                              setSizeDropdownOpen(false);
+                            }}
+                            className={`px-4 py-3 hover:bg-green-50 cursor-pointer first:rounded-t-xl ${
+                              formData.size === size ? 'bg-green-100 text-green-800 font-medium' : 'text-gray-700'
+                            }`}
+                          >
+                            {size}
+                          </li>
+                        ))}
+                      </ul>
+
+                      {/* Add-new-size footer */}
+                      <div className="border-t border-gray-200 bg-gray-50 p-2">
+                        {addingSize ? (
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              autoFocus
+                              value={newSizeName}
+                              onChange={(e) => setNewSizeName(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                  e.preventDefault();
+                                  handleAddSize();
+                                } else if (e.key === 'Escape') {
+                                  setAddingSize(false);
+                                  setNewSizeName('');
+                                }
+                              }}
+                              placeholder="ຂະໜາດໃໝ່"
+                              className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-sm"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleAddSize}
+                              disabled={!newSizeName.trim()}
+                              className="px-3 py-2 bg-green-700 text-white text-sm rounded-lg hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                            >
+                              ບັນທຶກ
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAddingSize(false);
+                                setNewSizeName('');
+                              }}
+                              className="px-2 py-2 text-gray-500 text-sm rounded-lg hover:bg-gray-200"
+                            >
+                              ຍົກເລີກ
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setAddingSize(true)}
+                            className="w-full flex items-center justify-center gap-1 px-4 py-2 text-green-700 font-medium text-sm rounded-lg hover:bg-green-100"
+                          >
+                            + ເພີ່ມຂະໜາດ
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   )}
                 </div>
               </div>
@@ -398,31 +557,89 @@ export default function PlantForm({ productId }: PlantFormProps) {
                       )}
                     </button>
                     {unitDropdownOpen && (
-                      <ul className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-xl shadow-lg max-h-60 overflow-auto">
-                        <li
-                          onClick={() => {
-                            setFormData(prev => ({ ...prev, unit: '' }));
-                            setUnitDropdownOpen(false);
-                          }}
-                          className="px-4 py-3 text-gray-500 hover:bg-green-50 cursor-pointer rounded-t-xl"
-                        >
-                          ເລືອກຫົວໜ່ວຍ
-                        </li>
-                        {units.map((unit: Unit) => (
+                      <div className="absolute z-10 mt-1 w-full bg-white border border-gray-300 rounded-xl shadow-lg overflow-hidden">
+                        <ul className="max-h-60 overflow-auto">
                           <li
-                            key={unit.id}
                             onClick={() => {
-                              setFormData(prev => ({ ...prev, unit: unit.id }));
+                              setFormData(prev => ({ ...prev, unit: '' }));
                               setUnitDropdownOpen(false);
                             }}
-                            className={`px-4 py-3 hover:bg-green-50 cursor-pointer last:rounded-b-xl ${
-                              formData.unit === unit.id ? 'bg-green-100 text-green-800 font-medium' : 'text-gray-700'
-                            }`}
+                            className="px-4 py-3 text-gray-500 hover:bg-green-50 cursor-pointer rounded-t-xl"
                           >
-                            {unit.name}
+                            ເລືອກຫົວໜ່ວຍ
                           </li>
-                        ))}
-                      </ul>
+                          {units.length === 0 && (
+                            <li className="px-4 py-3 text-gray-400 text-sm">
+                              ຍັງບໍ່ມີຫົວໜ່ວຍ
+                            </li>
+                          )}
+                          {units.map((unit: Unit) => (
+                            <li
+                              key={unit.id}
+                              onClick={() => {
+                                setFormData(prev => ({ ...prev, unit: unit.id }));
+                                setUnitDropdownOpen(false);
+                              }}
+                              className={`px-4 py-3 hover:bg-green-50 cursor-pointer ${
+                                formData.unit === unit.id ? 'bg-green-100 text-green-800 font-medium' : 'text-gray-700'
+                              }`}
+                            >
+                              {unit.name}
+                            </li>
+                          ))}
+                        </ul>
+
+                        {/* Add-new-unit footer */}
+                        <div className="border-t border-gray-200 bg-gray-50 p-2">
+                          {addingUnit ? (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                autoFocus
+                                value={newUnitName}
+                                onChange={(e) => setNewUnitName(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    handleAddUnit();
+                                  } else if (e.key === 'Escape') {
+                                    setAddingUnit(false);
+                                    setNewUnitName('');
+                                  }
+                                }}
+                                placeholder="ຊື່ຫົວໜ່ວຍໃໝ່"
+                                className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 bg-white text-sm"
+                              />
+                              <button
+                                type="button"
+                                onClick={handleAddUnit}
+                                disabled={creatingUnit || !newUnitName.trim()}
+                                className="px-3 py-2 bg-green-700 text-white text-sm rounded-lg hover:bg-green-800 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                              >
+                                {creatingUnit ? '...' : 'ບັນທຶກ'}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setAddingUnit(false);
+                                  setNewUnitName('');
+                                }}
+                                className="px-2 py-2 text-gray-500 text-sm rounded-lg hover:bg-gray-200"
+                              >
+                                ຍົກເລີກ
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setAddingUnit(true)}
+                              className="w-full flex items-center justify-center gap-1 px-4 py-2 text-green-700 font-medium text-sm rounded-lg hover:bg-green-100"
+                            >
+                              + ເພີ່ມຫົວໜ່ວຍ
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     )}
                   </div>
                 )}

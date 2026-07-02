@@ -169,30 +169,30 @@ export function useCategories() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchCategories = async () => {
-      setLoading(true);
-      setError(null);
+  const fetchCategories = useCallback(async () => {
+    setLoading(true);
+    setError(null);
 
-      try {
-        const data = await gqlFetch(GET_CATEGORIES_QUERY);
+    try {
+      const data = await gqlFetch(GET_CATEGORIES_QUERY);
 
-        if (data.errors) {
-          setError(data.errors[0].message);
-        } else {
-          setCategories(data.data?.getCategories?.categories || []);
-        }
-      } catch {
-        setError("Failed to fetch categories");
-      } finally {
-        setLoading(false);
+      if (data.errors) {
+        setError(data.errors[0].message);
+      } else {
+        setCategories(data.data?.getCategories?.categories || []);
       }
-    };
-
-    fetchCategories();
+    } catch {
+      setError("Failed to fetch categories");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  return { categories, loading, error };
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  return { categories, loading, error, refetch: fetchCategories };
 }
 
 // Hook for creating a product

@@ -92,14 +92,14 @@ export default function DashboardLayout({
                 onClick={() => router.push('/dashboard/addPlant')}
                  className={`flex items-center justify-center ${GRADIENTS.sidebarBg} space-x-2 text-slate-100 transition-colors px-3 py-2 rounded-[50px]`}>
                   <GoPlus className='font-bold w-5 h-5' />
-                  <span>ເພີ່ມພືດໃໝ່</span>
+                  <span>ເພີ່ມສີນຄ້າໃໝ່</span>
                 </button>
-                <button className="relative p-2 text-slate-800 transition-colors">
+                {/* <button className="relative p-2 text-slate-800 transition-colors">
                   <NotiIcon className="w-7 h-7 font-bold" />
                   <span className="absolute top-1 right-1 w-4 h-4 bg-yellow-600 rounded-full text-xs text-white flex items-center justify-center font-bold">
                     2
                   </span>
-                </button>
+                </button> */}
                 <div className="relative" ref={profileMenuRef}>
                   <button
                     onClick={() => setProfileMenuOpen(!profileMenuOpen)}
