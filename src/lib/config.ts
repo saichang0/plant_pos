@@ -2,9 +2,9 @@ export const BACKEND_URLS = {
   local: 'http://localhost:5000/graphql',
   network: 'http://10.91.171.208:5000/graphql',
   androidEmulator: 'http://10.0.2.2:5000/graphql',
-  // Production (Vultr VPS "greenmarket", Singapore). Nginx proxies port 80 to
-  // the backend, so there is no ":5000" here.
-  production: 'http://45.77.34.106/graphql',
+  // Production. Cloudflare + Nginx serve the backend over HTTPS at the
+  // api subdomain (Nginx proxies to the Docker container on port 4000).
+  production: 'https://api.gremk.online/graphql',
 };
 
 // The URL actually used at runtime. Override per environment with
