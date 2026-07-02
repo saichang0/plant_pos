@@ -429,7 +429,7 @@ export default function PlantForm({ productId }: PlantFormProps) {
               </div>
 
               {/* Weight Per Unit (grams) */}
-              {/* <div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   ນ້ຳໜັກຕໍ່ຫົວໜ່ວຍ (ກິໂລ)
                 </label>
@@ -441,10 +441,10 @@ export default function PlantForm({ productId }: PlantFormProps) {
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
                   placeholder="ນ້ຳໜັກຕໍ່ຫົວໜ່ວຍ (ກິໂລ)"
                 />
-              </div> */}
+              </div>
 
               {/* Age (Months) */}
-              {/* <div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   ອາຍຸ (ເດືອນ)
                 </label>
@@ -456,7 +456,7 @@ export default function PlantForm({ productId }: PlantFormProps) {
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
                   placeholder="ໃສ່ອາຍຸເປັນເດືອນ"
                 />
-              </div> */}
+              </div>
 
               {/* Stock Quantity */}
               <div>
@@ -504,7 +504,7 @@ export default function PlantForm({ productId }: PlantFormProps) {
               </div>
 
               {/* Price Per Half Bag */}
-              {/* <div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   ລາຄາເຄິ່ງຖົງ
                 </label>
@@ -516,10 +516,10 @@ export default function PlantForm({ productId }: PlantFormProps) {
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
                   placeholder="ຖ້າບໍ່ໃສ່ = ລາຄາຖົງ / 2"
                 />
-              </div> */}
+              </div>
 
               {/* Price Per 12Kg */}
-              {/* <div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   ລາຄາ 12 ກິໂລ
                 </label>
@@ -531,10 +531,10 @@ export default function PlantForm({ productId }: PlantFormProps) {
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
                   placeholder="ລາຄາຂາຍ 12 ກິໂລ (ຖ້າມີ)"
                 />
-              </div> */}
+              </div>
 
               {/* Price Per Kg */}
-              {/* <div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   ລາຄາຕໍ່ກິໂລ
                 </label>
@@ -546,10 +546,10 @@ export default function PlantForm({ productId }: PlantFormProps) {
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
                   placeholder="ລາຄາຂາຍຕໍ່ກິໂລ (ຖ້າມີ)"
                 />
-              </div> */}
+              </div>
 
               {/* Discount */}
-              {/* <div>
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Discount (%)
                 </label>
@@ -561,7 +561,7 @@ export default function PlantForm({ productId }: PlantFormProps) {
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
                   placeholder="Enter discount percentage"
                 />
-              </div> */}
+              </div>
 
               {/* Special Offers */}
               <div className="md:col-span-2">
@@ -577,7 +577,7 @@ export default function PlantForm({ productId }: PlantFormProps) {
                 </label>
               </div>
               {/* Popular */}
-              {/* <div className="md:col-span-2">
+              <div className="md:col-span-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-4">
                   <input
                     type="checkbox"
@@ -588,7 +588,7 @@ export default function PlantForm({ productId }: PlantFormProps) {
                   />
                   Popular
                 </label>
-              </div> */}
+              </div>
             </div>
           </div>
 
