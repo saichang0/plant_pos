@@ -12,6 +12,7 @@
     "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^5.2.2",
     "axios": "^1.13.2",
+    "graphql": "^16.9.0",
     "graphql-request": "^7.4.0",
     "html5-qrcode": "^2.3.8",
     "next": "16.1.1",
