@@ -340,7 +340,7 @@ export default function DashboardPage() {
                       border: "1px solid #e5e7eb",
                       fontSize: 12,
                     }}
-                    formatter={(v: number) => `₭ ${formatMoney(v)}`}
+                    formatter={(v) => `₭ ${formatMoney(Number(v))}`}
                   />
                   <Bar
                     dataKey="ມືຖື"
@@ -386,7 +386,7 @@ export default function DashboardPage() {
                       border: "1px solid #e5e7eb",
                       fontSize: 12,
                     }}
-                    formatter={(v: number) => `₭ ${formatMoney(v)}`}
+                    formatter={(v) => `₭ ${formatMoney(Number(v))}`}
                   />
                 </PieChart>
               </ResponsiveContainer>
@@ -484,7 +484,7 @@ export default function DashboardPage() {
                     border: "1px solid #e5e7eb",
                     fontSize: 12,
                   }}
-                  formatter={(v: number) => `₭ ${formatMoney(v)}`}
+                  formatter={(v) => `₭ ${formatMoney(Number(v))}`}
                 />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Area
