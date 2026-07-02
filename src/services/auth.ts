@@ -1,7 +1,7 @@
 // src/services/auth.ts
 import { GraphQLClient } from 'graphql-request';
 import { LOGIN_MUTATION, REQUEST_OTP_MUTATION, VERIFY_USER_OTP, RESET_PASSWORD_MUTATION } from '@/src/apollo/auth/mutation';
-import { BACKEND_URLS } from '@/src/lib/config';
+import { GRAPHQL_URL } from '@/src/lib/config';
 import {
   LoginUserInput,
   LoginResponse,
@@ -13,7 +13,7 @@ import {
   ResetPasswordResponse,
 } from '@/src/types/auth';
 
-const graphqlEndpoint = process.env.NEXT_PUBLIC_GRAPHQL_URL || BACKEND_URLS.local;
+const graphqlEndpoint = GRAPHQL_URL;
 const client = new GraphQLClient(graphqlEndpoint);
 
 export async function loginUser(input: LoginUserInput): Promise<LoginResponse> {

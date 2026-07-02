@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BACKEND_URLS } from "@/src/lib/config";
+import { API_BASE_URL } from "@/src/lib/config";
 import { useCurrentUser, useUpdateUser } from "@/src/features/user/useUser";
 import { useToast } from "@/src/components/toast";
 import { UploadIcon, SaveIcon } from "@/src/components/icons/page";
@@ -9,10 +9,9 @@ import { UploadIcon, SaveIcon } from "@/src/components/icons/page";
 async function uploadImage(file: File): Promise<string> {
   const formData = new FormData();
   formData.append("file", file);
-  const baseUrl = BACKEND_URLS.local.replace("/graphql", "");
   const token =
     typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
-  const response = await fetch(`${baseUrl}/upload`, {
+  const response = await fetch(`${API_BASE_URL}/upload`, {
     method: "POST",
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: formData,

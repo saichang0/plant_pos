@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { BACKEND_URLS } from "@/src/lib/config";
+import { API_BASE_URL } from "@/src/lib/config";
 import { gqlFetch } from "@/src/lib/gqlFetch";
 import { CREATE_PRODUCT_MUTATION, UPDATE_PRODUCT_MUTATION, DELETE_PRODUCT_MUTATION } from "@/src/apollo/product/mutation";
 import { GET_PRODUCTS_QUERY, GET_PRODUCT_QUERY } from "@/src/apollo/product/query";
@@ -87,8 +87,7 @@ async function uploadImage(file: File): Promise<string> {
   const formData = new FormData();
   formData.append("file", file);
 
-  const baseUrl = BACKEND_URLS.local.replace("/graphql", "");
-  const response = await fetch(`${baseUrl}/upload`, {
+  const response = await fetch(`${API_BASE_URL}/upload`, {
     method: "POST",
     headers: {
       ...(typeof window !== "undefined" && localStorage.getItem("accessToken")

@@ -1,4 +1,4 @@
-import { BACKEND_URLS } from "@/src/lib/config";
+import { GRAPHQL_URL } from "@/src/lib/config";
 
 function getAuthHeaders(): Record<string, string> {
   const token =
@@ -10,7 +10,7 @@ export async function gqlFetch(
   query: string,
   variables?: Record<string, unknown>
 ): Promise<any> {
-  const response = await fetch(BACKEND_URLS.local, {
+  const response = await fetch(GRAPHQL_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

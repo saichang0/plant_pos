@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { gqlFetch } from "@/src/lib/gqlFetch";
-import { BACKEND_URLS } from "@/src/lib/config";
+import { API_BASE_URL } from "@/src/lib/config";
 import { BANK_ACCOUNTS_QUERY } from "@/src/apollo/bank/query";
 import {
   CREATE_BANK_ACCOUNT_MUTATION,
@@ -23,11 +23,10 @@ export async function uploadBankImage(file: File): Promise<string> {
   const formData = new FormData();
   formData.append("file", file);
 
-  const baseUrl = BACKEND_URLS.local.replace("/graphql", "");
   const token =
     typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
 
-  const response = await fetch(`${baseUrl}/upload`, {
+  const response = await fetch(`${API_BASE_URL}/upload`, {
     method: "POST",
     headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: formData,
