@@ -280,7 +280,7 @@ const OrderDashboard = () => {
                 )}
               </div>
             </div>
-            <button
+            {/* <button
               onClick={() => refetch({ status: selectedStatus ?? undefined })}
               className="p-3 rounded-xl bg-white border border-gray-200 shadow-sm text-gray-600 hover:bg-gray-50 hover:text-emerald-600 transition"
               title="Refresh"
@@ -291,7 +291,7 @@ const OrderDashboard = () => {
                 <path d="M21 12a9 9 0 0 1-15.5 6.4L3 16" />
                 <path d="M3 21v-5h5" />
               </svg>
-            </button>
+            </button> */}
           </div>
         </header>
 
