@@ -313,7 +313,7 @@ export default function PlantForm({ productId }: PlantFormProps) {
               {/* Description */}
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description
+                  ຄຳອະທິບາຍ
                 </label>
                 <textarea
                   name="description"
@@ -328,7 +328,7 @@ export default function PlantForm({ productId }: PlantFormProps) {
               {/* Size */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Size
+                  ຂະໜາດ
                 </label>
                 <div className="relative" ref={sizeDropdownRef}>
                   <button
@@ -549,7 +549,7 @@ export default function PlantForm({ productId }: PlantFormProps) {
               </div>
 
               {/* Discount */}
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Discount (%)
                 </label>
@@ -561,10 +561,10 @@ export default function PlantForm({ productId }: PlantFormProps) {
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
                   placeholder="Enter discount percentage"
                 />
-              </div>
+              </div> */}
 
               {/* Special Offers */}
-              <div className="md:col-span-2">
+              {/* <div className="md:col-span-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-4">
                   <input
                     type="checkbox"
@@ -575,9 +575,9 @@ export default function PlantForm({ productId }: PlantFormProps) {
                   />
                   ພິເສດ
                 </label>
-              </div>
+              </div> */}
               {/* Popular */}
-              <div className="md:col-span-2">
+              {/* <div className="md:col-span-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-4">
                   <input
                     type="checkbox"
@@ -588,7 +588,7 @@ export default function PlantForm({ productId }: PlantFormProps) {
                   />
                   Popular
                 </label>
-              </div>
+              </div> */}
             </div>
           </div>
 
