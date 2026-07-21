@@ -351,11 +351,11 @@ export default function StockPage() {
                             ສ່ວນຫຼຸດ
                           </span>;
                         )} */}
-                        {p.isPopular && (
+                        {/* {p.isPopular && (
                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold text-white bg-blue-500">
                             ຂາຍດີ
                           </span>
-                        )}
+                        )} */}
                         {!p.isActive && (
                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold text-gray-700 bg-gray-200">
                             Inactive

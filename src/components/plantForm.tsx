@@ -655,9 +655,9 @@ export default function PlantForm({ productId }: PlantFormProps) {
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
                   placeholder="ນ້ຳໜັກຕໍ່ຫົວໜ່ວຍ (ກິໂລ)"
                 />
-              </div>
+              </div> */}
 
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   ອາຍຸ (ເດືອນ)
                 </label>
@@ -669,7 +669,7 @@ export default function PlantForm({ productId }: PlantFormProps) {
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
                   placeholder="ໃສ່ອາຍຸເປັນເດືອນ"
                 />
-              </div>
+              </div> */}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -713,7 +713,7 @@ export default function PlantForm({ productId }: PlantFormProps) {
                 />
               </div>
 
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   ລາຄາເຄິ່ງຖົງ
                 </label>
@@ -725,9 +725,9 @@ export default function PlantForm({ productId }: PlantFormProps) {
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
                   placeholder="ຖ້າບໍ່ໃສ່ = ລາຄາຖົງ / 2"
                 />
-              </div>
+              </div> */}
 
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   ລາຄາ 12 ກິໂລ
                 </label>
@@ -739,9 +739,9 @@ export default function PlantForm({ productId }: PlantFormProps) {
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
                   placeholder="ລາຄາຂາຍ 12 ກິໂລ (ຖ້າມີ)"
                 />
-              </div>
+              </div> */}
 
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   ລາຄາຕໍ່ກິໂລ
                 </label>
