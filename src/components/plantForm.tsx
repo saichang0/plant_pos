@@ -432,7 +432,7 @@ export default function PlantForm({ productId }: PlantFormProps) {
               </div>
 
               {/* Size */}
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   ຂະໜາດ
                 </label>
@@ -469,8 +469,6 @@ export default function PlantForm({ productId }: PlantFormProps) {
                           </li>
                         ))}
                       </ul>
-
-                      {/* Add-new-size footer */}
                       <div className="border-t border-gray-200 bg-gray-50 p-2">
                         {addingSize ? (
                           <div className="flex items-center gap-2">
@@ -523,10 +521,10 @@ export default function PlantForm({ productId }: PlantFormProps) {
                     </div>
                   )}
                 </div>
-              </div>
+              </div> */}
 
               {/* Unit */}
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   ຫົວໜ່ວຍ
                 </label>
@@ -589,7 +587,6 @@ export default function PlantForm({ productId }: PlantFormProps) {
                           ))}
                         </ul>
 
-                        {/* Add-new-unit footer */}
                         <div className="border-t border-gray-200 bg-gray-50 p-2">
                           {addingUnit ? (
                             <div className="flex items-center gap-2">
@@ -643,10 +640,10 @@ export default function PlantForm({ productId }: PlantFormProps) {
                     )}
                   </div>
                 )}
-              </div>
+              </div> */}
 
               {/* Weight Per Unit (grams) */}
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   ນ້ຳໜັກຕໍ່ຫົວໜ່ວຍ (ກິໂລ)
                 </label>
@@ -660,7 +657,6 @@ export default function PlantForm({ productId }: PlantFormProps) {
                 />
               </div>
 
-              {/* Age (Months) */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   ອາຍຸ (ເດືອນ)
@@ -675,7 +671,6 @@ export default function PlantForm({ productId }: PlantFormProps) {
                 />
               </div>
 
-              {/* Stock Quantity */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   ຈຳນວນສິນຄ້າ
@@ -690,7 +685,6 @@ export default function PlantForm({ productId }: PlantFormProps) {
                 />
               </div>
 
-              {/* Cost Price */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   ລາຄາຊື້
@@ -705,7 +699,6 @@ export default function PlantForm({ productId }: PlantFormProps) {
                 />
               </div>
 
-              {/* Sale Price */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   ລາຄາຂາຍ
@@ -720,7 +713,6 @@ export default function PlantForm({ productId }: PlantFormProps) {
                 />
               </div>
 
-              {/* Price Per Half Bag */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   ລາຄາເຄິ່ງຖົງ
@@ -735,7 +727,6 @@ export default function PlantForm({ productId }: PlantFormProps) {
                 />
               </div>
 
-              {/* Price Per 12Kg */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   ລາຄາ 12 ກິໂລ
@@ -750,7 +741,6 @@ export default function PlantForm({ productId }: PlantFormProps) {
                 />
               </div>
 
-              {/* Price Per Kg */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   ລາຄາຕໍ່ກິໂລ
@@ -763,7 +753,7 @@ export default function PlantForm({ productId }: PlantFormProps) {
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white"
                   placeholder="ລາຄາຂາຍຕໍ່ກິໂລ (ຖ້າມີ)"
                 />
-              </div>
+              </div> */}
 
               {/* Discount */}
               {/* <div>
@@ -781,7 +771,7 @@ export default function PlantForm({ productId }: PlantFormProps) {
               </div> */}
 
               {/* Special Offers */}
-              {/* <div className="md:col-span-2">
+              <div className="md:col-span-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-4">
                   <input
                     type="checkbox"
@@ -792,9 +782,9 @@ export default function PlantForm({ productId }: PlantFormProps) {
                   />
                   ພິເສດ
                 </label>
-              </div> */}
+              </div>
               {/* Popular */}
-              {/* <div className="md:col-span-2">
+              <div className="md:col-span-2">
                 <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-4">
                   <input
                     type="checkbox"
@@ -803,9 +793,9 @@ export default function PlantForm({ productId }: PlantFormProps) {
                     onChange={handleInputChange}
                     className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
                   />
-                  Popular
+                  ຍອດນິຍົມ
                 </label>
-              </div> */}
+              </div>
             </div>
           </div>
 

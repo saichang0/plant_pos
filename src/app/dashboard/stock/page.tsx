@@ -134,13 +134,13 @@ export default function StockPage() {
             color="blue"
             icon="✓"
           />
-          <KpiCard
+          {/* <KpiCard
             title="ສ່ວນຫຼຸດ"
             value={String(stats.special)}
             sub="ສິນຄ້າພິເສດ"
             color="orange"
             icon="🏷️"
-          />
+          /> */}
           <KpiCard
             title="ໝົດສະຕ໋ອກ"
             value={String(stats.outOfStock)}
@@ -346,11 +346,11 @@ export default function StockPage() {
                         <span className="font-semibold text-gray-900 truncate">
                           {p.name}
                         </span>
-                        {p.isSpecialOffer && (
+                        {/* {p.isSpecialOffer && (
                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold text-white bg-orange-500">
                             ສ່ວນຫຼຸດ
-                          </span>
-                        )}
+                          </span>;
+                        )} */}
                         {p.isPopular && (
                           <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold text-white bg-blue-500">
                             ຂາຍດີ
