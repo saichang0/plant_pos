@@ -79,13 +79,13 @@ const SettingsPage = () => {
       link: "/dashboard/setting/supplier",
       tone: "purple",
     },
-    {
-      title: "ບັນຊີ",
-      desc: "ຈັດການບັນຊີທະນະຄານ",
-      icon: <BankIcon size={28} />,
-      link: "/dashboard/setting/bank",
-      tone: "orange",
-    },
+    // {
+    //   title: "ບັນຊີ",
+    //   desc: "ຈັດການບັນຊີທະນະຄານ",
+    //   icon: <BankIcon size={28} />,
+    //   link: "/dashboard/setting/bank",
+    //   tone: "orange",
+    // },
     {
       title: "ຕັ້ງຄ່າຮ້ານ",
       desc: "ຂໍ້ມູນຮ້ານ, ໂລໂກ້, QR ບັນຊີ",
