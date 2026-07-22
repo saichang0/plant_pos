@@ -135,13 +135,14 @@ export function useSales() {
   const [error, setError] = useState<string | null>(null);
 
   const fetchSales = useCallback(
-    async (options?: { status?: string; limit?: number; offset?: number }) => {
+    async (options?: { status?: string; source?: 'PLENT_WEB' | 'PLENT_APP'; limit?: number; offset?: number }) => {
       setLoading(true);
       setError(null);
 
       try {
         const result = await gqlFetch(GET_SALES_QUERY, {
               status: options?.status || undefined,
+              source: options?.source || undefined,
               limit: options?.limit || 50,
               offset: options?.offset || 0,
             });

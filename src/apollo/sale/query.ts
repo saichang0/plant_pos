@@ -1,8 +1,8 @@
 import { gql } from 'graphql-request';
 
 export const GET_SALES_QUERY = gql`
-query GetSales($status: String, $limit: Int, $offset: Int) {
-  getSales(status: $status, limit: $limit, offset: $offset) {
+query GetSales($status: String, $source: SaleSource, $limit: Int, $offset: Int) {
+  getSales(status: $status, source: $source, limit: $limit, offset: $offset) {
     status
     message
     tap

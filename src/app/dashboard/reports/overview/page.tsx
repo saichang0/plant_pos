@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -62,8 +62,20 @@ const startOfToday = () => {
 
 export default function DashboardPage() {
   const { data, loading: dashLoading, error: dashError, refetch } = useDashboard();
-  const { sales, refetch: refetchSales } = useSales();
+  const { sales: appSales, refetch: refetchAppSales } = useSales();
+  const { sales: posSales, refetch: refetchPosSales } = useSales();
   const [chartView, setChartView] = useState<ChartView>("month");
+
+  const sales = useMemo(() => [...appSales, ...posSales], [appSales, posSales]);
+  const refetchSales = useCallback(() => {
+    refetchAppSales({ source: "PLENT_APP", limit: 200 });
+    refetchPosSales({ source: "PLENT_WEB", limit: 200 });
+  }, [refetchAppSales, refetchPosSales]);
+
+  useEffect(() => {
+    refetchSales();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ─── Channel breakdown (client-side) ───────────────────────
   const channelStats = useMemo(() => {
