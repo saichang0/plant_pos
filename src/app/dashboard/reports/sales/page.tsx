@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useReport } from "@/src/features/report/useReport";
+import { useCurrentUser } from "@/src/features/user/useUser";
 import DateRangePicker, { defaultThisWeek } from "@/src/components/DateRangePicker";
 import type { DateRangeValue } from "@/src/components/DateRangePicker";
 
@@ -65,15 +66,27 @@ const KPI_ICONS: Record<string, React.ReactNode> = {
   ),
 };
 
+function formatDateShort(value: string | undefined): string {
+  if (!value) return "";
+  const d = new Date(value);
+  if (isNaN(d.getTime())) return value;
+  return d.toLocaleDateString("lo-LA", { year: "numeric", month: "2-digit", day: "2-digit" });
+}
+
 export default function SalesReportPage() {
   const [dateRange, setDateRange] = useState<DateRangeValue>(defaultThisWeek);
   const { data, loading, error, fetchReport } = useReport();
+  const { user: shop } = useCurrentUser();
 
   useEffect(() => {
     fetchReport(dateRange.from, dateRange.to);
   }, [dateRange, fetchReport]);
 
   const profit = data?.profit;
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   const kpis = useMemo(
     () => [
@@ -111,7 +124,7 @@ export default function SalesReportPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/40 p-8 font-sans">
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto space-y-8 no-print">
         {/* Header */}
         <header className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
@@ -120,7 +133,7 @@ export default function SalesReportPage() {
               ສະຫຼຸບຍອດຂາຍ ກຳໄລ ແລະ ສິນຄ້າຂາຍດີ ກອງຕາມຊ່ວງວັນທີ
             </p>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             <DateRangePicker value={dateRange} onChange={(v) => setDateRange(v)} />
             {!(dateRange.from === defaultThisWeek().from && dateRange.to === defaultThisWeek().to) && (
               <button
@@ -131,6 +144,19 @@ export default function SalesReportPage() {
                 ✕
               </button>
             )}
+            <button
+              onClick={handlePrint}
+              disabled={loading || !data}
+              className="flex items-center gap-2 px-4 h-10 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              title="ພິມລາຍງານ"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="6 9 6 2 18 2 18 9" />
+                <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2" />
+                <rect x="6" y="14" width="12" height="8" />
+              </svg>
+              ພິມລາຍງານ
+            </button>
           </div>
         </header>
 
@@ -272,6 +298,147 @@ export default function SalesReportPage() {
           </div>
         </section>
       </div>
+
+      {/* ─── Printable document (hidden on screen, shown only when printing) ─── */}
+      <div className="print-only hidden">
+        {/* Shop identity */}
+        <div className="flex items-start justify-between border-b-2 border-black pb-3">
+          <div className="flex items-center gap-3">
+            {shop?.profileImageUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={shop.profileImageUrl} alt="logo" className="print-logo" />
+            )}
+            <div>
+              <p className="text-base font-bold">{shop?.shopName || "ຮ້ານຄ້າ"}</p>
+              {shop?.phoneNumber && <p className="text-xs">ໂທ: {shop.phoneNumber}</p>}
+              {shop?.email && <p className="text-xs">ອີເມວ: {shop.email}</p>}
+            </div>
+          </div>
+          <p className="text-xs text-right">
+            ພິມວັນທີ: {formatDate(new Date().toISOString())}
+          </p>
+        </div>
+
+        {/* Document title */}
+        <div className="text-center mt-4">
+          <h1 className="text-xl font-bold">ລາຍງານການຂາຍ / Sales Report</h1>
+          <p className="text-sm mt-1">
+            ຊ່ວງວັນທີ: {formatDateShort(dateRange.from)} — {formatDateShort(dateRange.to)}
+          </p>
+        </div>
+
+        {/* Summary */}
+        <table className="print-table mt-6">
+          <tbody>
+            <tr>
+              <td className="font-semibold">ລາຍຮັບລວມ</td>
+              <td className="text-right">₭ {formatMoney(profit?.grossRevenue)}</td>
+              <td className="font-semibold">ຈຳນວນອໍເດີ</td>
+              <td className="text-right">{profit?.totalOrders ?? 0}</td>
+            </tr>
+            <tr>
+              <td className="font-semibold">ຕົ້ນທຶນລວມ</td>
+              <td className="text-right">₭ {formatMoney(profit?.totalCost)}</td>
+              <td className="font-semibold">ອັດຕາກຳໄລ</td>
+              <td className="text-right">{formatMoney(profit?.profitMargin)}%</td>
+            </tr>
+            <tr>
+              <td className="font-semibold">ກຳໄລສຸດທິ</td>
+              <td className="text-right">₭ {formatMoney(profit?.netProfit)}</td>
+              <td />
+              <td />
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Receipts */}
+        <table className="print-table mt-6">
+          <thead>
+            <tr>
+              <th>ວັນທີ</th>
+              <th>ລູກຄ້າ</th>
+              <th>ພະນັກງານ</th>
+              <th className="text-center">ລາຍການ</th>
+              <th className="text-right">ຍອດລວມ</th>
+              <th className="text-center">ສະຖານະ</th>
+            </tr>
+          </thead>
+          <tbody>
+            {(data?.receipts ?? []).map((r) => (
+              <tr key={r.saleId}>
+                <td>{formatDate(r.saleDate)}</td>
+                <td>{r.customerName || "Guest"}</td>
+                <td>{r.staffName || "-"}</td>
+                <td className="text-center">{r.items?.length ?? 0}</td>
+                <td className="text-right">₭ {formatMoney(r.totalAmount)}</td>
+                <td className="text-center">{statusMeta(r.status).label}</td>
+              </tr>
+            ))}
+            {(data?.receipts ?? []).length === 0 && (
+              <tr>
+                <td colSpan={6} className="text-center">ບໍ່ມີໃບບິນໃນຊ່ວງເວລານີ້</td>
+              </tr>
+            )}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colSpan={4} className="text-right font-semibold">ລວມທັງໝົດ / Total</td>
+              <td className="text-right font-semibold">₭ {formatMoney(profit?.grossRevenue)}</td>
+              <td />
+            </tr>
+          </tfoot>
+        </table>
+
+        <p className="text-xs mt-8">ເອກະສານນີ້ອອກຈາກລະບົບ POS ໂດຍອັດຕະໂນມັດ</p>
+      </div>
+
+      <style jsx global>{`
+        .print-only {
+          display: none;
+        }
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          .print-only,
+          .print-only * {
+            visibility: visible;
+          }
+          .print-only {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 24px;
+            color: #000;
+            font-size: 12px;
+          }
+          .print-table {
+            width: 100%;
+            border-collapse: collapse;
+          }
+          .print-table th,
+          .print-table td {
+            border: 1px solid #999;
+            padding: 6px 8px;
+            text-align: left;
+          }
+          .print-table thead {
+            background: #eee;
+          }
+          .print-logo {
+            width: 48px;
+            height: 48px;
+            object-fit: cover;
+            border-radius: 6px;
+          }
+          @page {
+            size: A4;
+            margin: 16mm;
+          }
+        }
+      `}</style>
     </div>
   );
 }
